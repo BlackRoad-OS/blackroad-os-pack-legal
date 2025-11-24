@@ -7,6 +7,7 @@ const payload = {
   agent: 'LegalPack-Gen-0',
 };
 
+fs.mkdirSync(path.dirname(beaconPath), { recursive: true });
 fs.writeFileSync(beaconPath, JSON.stringify(payload, null, 2));
 
 // TODO(legal-pack-next): add e-signature webhook registration once endpoints exist.
