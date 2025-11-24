@@ -9,8 +9,11 @@ export type PolicyLint = {
 
 const requiredSections = ['GDPR', 'CCPA'];
 
-const hasSection = (content: string, keyword: string) =>
-  content.toLowerCase().includes(keyword.toLowerCase());
+const hasSection = (content: string, keyword: string) => {
+  // Match lines that start with one or more '#' followed by optional whitespace and the keyword as a word
+  const headerRegex = new RegExp(`^#+\\s*${keyword}\\b`, 'im');
+  return headerRegex.test(content);
+};
 
 export const lintPolicy = (filePath: string): PolicyLint => {
   const absolutePath = path.resolve(filePath);
