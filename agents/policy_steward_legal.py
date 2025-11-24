@@ -53,7 +53,7 @@ def suggest_communication_plan(change_summary: Dict) -> Dict:
   """
   Suggest a lightweight communication plan for policy updates.
   """
-  impacted_sections: List[str] = [item.get("field") for item in change_summary.get("modified", []) if item.get("field")]
+  impacted_sections: List[str] = [item.get("field") for item in change_summary.get("modified", []) if isinstance(item.get("field"), str)]
   cadence = "single announcement" if len(impacted_sections) <= 2 else "multi-touch campaign"
 
   return {
