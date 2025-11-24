@@ -13,7 +13,7 @@ pnpm br-legal render nda -v party_a="BlackRoad OS, Inc." -v party_b="Client" -v 
 Render workflow templates via Liquid and Handlebars-style variables:
 
 ```bash
-pnpm ts-node lib/template.ts workflows/contract-signature.yaml.hbs > .github/workflows/sign.yml
+pnpm ts-node lib/renderWorkflow.ts workflows/contract-signature.yaml.hbs > .github/workflows/sign.yml
 ```
 
 ## Features
