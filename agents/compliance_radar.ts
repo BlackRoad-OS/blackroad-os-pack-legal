@@ -22,7 +22,10 @@ export function scanChecklist(checklist: ComplianceChecklist): ComplianceFlag[] 
   ];
 
   requiredKeys.forEach((key) => {
-    const value = (dpaChecklist as Record<string, unknown>)[key];
+    let value: unknown = undefined;
+    if (Object.prototype.hasOwnProperty.call(dpaChecklist, key)) {
+      value = (dpaChecklist as Record<string, unknown>)[key];
+    }
     if (value === false || value === undefined) {
       flags.push({
         area: "DPA",
