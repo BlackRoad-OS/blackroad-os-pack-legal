@@ -1,0 +1,16 @@
+id: legal_contract_review
+description: Issue-spotting and outline refinement for draft contracts.
+not_legal_advice: true
+steps:
+  - id: parse_outline
+    agent: legal-contract-drafter-01
+    input: { draft_contract_text: "" }
+    output: outline
+  - id: highlight_risks
+    agent: legal-contract-drafter-01
+    input: { outline: "" }
+    output: risk_highlights
+  - id: questions_for_counsel
+    agent: legal-compliance-radar-01
+    input: { risk_highlights: "" }
+    output: questions_for_counsel

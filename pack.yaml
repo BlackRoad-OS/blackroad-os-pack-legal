@@ -1,0 +1,23 @@
+id: legal
+name: Legal & Policy Pack
+version: 0.1.0
+description: >
+  Contract-drafting helpers, policy and ToS change management, and
+  lightweight compliance checklists for legal operations teams.
+required_roles:
+  - Policy Steward
+  - Contract Manager
+  - Risk Advisor
+depends_on:
+  - blackroad-os-core >=0.1.0
+  - blackroad-os-docs >=0.1.0
+tags:
+  - legal
+  - contracts
+  - compliance
+  - policy
+  - risk
+disclaimer: >
+  This pack provides structured templates and issue-spotting assistants only.
+  It does not provide legal advice and must not be treated as a substitute for
+  licensed counsel.

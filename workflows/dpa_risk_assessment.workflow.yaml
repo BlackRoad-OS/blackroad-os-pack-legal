@@ -1,0 +1,12 @@
+id: legal_dpa_risk_assessment
+description: DPA checklist review with prompts for counsel follow-up.
+not_legal_advice: true
+steps:
+  - id: scan_dpa_checklist
+    agent: legal-compliance-radar-01
+    input: { checklist: "" }
+    output: compliance_flags
+  - id: questions_for_counsel
+    agent: legal-compliance-radar-01
+    input: { flags: "" }
+    output: questions_for_counsel

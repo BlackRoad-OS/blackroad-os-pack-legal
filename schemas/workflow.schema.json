@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Legal Workflow Schema",
+  "type": "object",
+  "required": ["id", "description", "steps", "not_legal_advice"],
+  "properties": {
+    "id": { "type": "string" },
+    "description": { "type": "string" },
+    "not_legal_advice": { "type": "boolean", "const": true },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "agent", "input", "output"],
+        "properties": {
+          "id": { "type": "string" },
+          "agent": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": ["string", "object"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
