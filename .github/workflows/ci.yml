@@ -1,0 +1,22 @@
+name: legal-pack-ci
+on:
+  push:
+  pull_request:
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+      - name: Lint markdown and YAML
+        run: |
+          pnpm markdownlint "**/*.md" "**/*.mdx"
+          pnpm prettier --check "**/*.{ts,js,json,md,mdx,yml,yaml}"
+      - name: Lint TypeScript
+        run: pnpm eslint . --ext .ts
+      - name: Run unit tests
+        run: pnpm test --if-present

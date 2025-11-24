@@ -1,0 +1,32 @@
+{
+  "name": "blackroad-os-pack-legal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "br-legal": "ts-node src/cli.ts",
+    "lint": "markdownlint \"**/*.md\" \"**/*.mdx\" && prettier --check \"**/*.{ts,js,json,md,mdx,yml,yaml}\" && eslint . --ext .ts",
+    "format": "prettier --write \"**/*.{ts,js,json,md,mdx,yml,yaml}\"",
+    "postbuild": "ts-node scripts/postbuild.ts",
+    "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "diff": "^7.0.0",
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "liquidjs": "^10.13.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "@typescript-eslint/parser": "^7.16.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "markdownlint-cli": "^0.39.0",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
