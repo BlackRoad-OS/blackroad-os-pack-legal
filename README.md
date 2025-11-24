@@ -10,7 +10,7 @@ pnpm br-legal list
 pnpm br-legal render nda -v party_a="BlackRoad OS, Inc." -v party_b="Client" -v date="2025-11-24"
 ```
 
-Render workflow templates via Liquid and Handlebars-style variables:
+Render workflow templates via Liquid variables (note: `.hbs` extension is used for workflow templates, but only Liquid syntax is supported):
 
 ```bash
 pnpm ts-node lib/renderWorkflow.ts workflows/contract-signature.yaml.hbs > .github/workflows/sign.yml

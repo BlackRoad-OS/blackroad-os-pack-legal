@@ -30,7 +30,7 @@ export const lintPolicies = (dir: string): PolicyLint[] => {
   const absoluteDir = path.resolve(dir);
   return fs
     .readdirSync(absoluteDir)
-    .filter((file) => file.endsWith('.mdx'))
+    .filter((file) => file.endsWith('.md') || file.endsWith('.mdx'))
     .map((file) => path.join(absoluteDir, file))
     .map((file) => lintPolicy(file));
 };
