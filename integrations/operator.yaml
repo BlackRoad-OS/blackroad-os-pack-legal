@@ -16,6 +16,17 @@ purpose:
   - Collect and process legal artifacts
   - Generate reports and metrics
 
+# ⚙️ Configurable Parameters
+parameters:
+  retention_review_notice_days:
+    description: "Days before retention end to send review notification"
+    default: 90
+    type: integer
+  stale_request_days:
+    description: "Days of inactivity before marking request as stale"
+    default: 30
+    type: integer
+
 # 📋 Job Definitions
 jobs:
   # ============================================
@@ -278,7 +289,7 @@ jobs:
     
     action:
       type: "report"
-      query: "artifacts where retention_end < now() + 90 days"
+      query: "artifacts where retention_end < now() + ${retention_review_notice_days} days"
       
     notifications:
       always:
@@ -301,19 +312,19 @@ jobs:
     
     action:
       type: "check"
-      query: "legal_reviews where state == 'needs_info' and updated_at < now() - 30 days"
+      query: "legal_reviews where state == 'needs_info' and updated_at < now() - ${stale_request_days} days"
       
     notifications:
       per_request:
         recipients: ["@requester"]
         channel: "email"
-        message: "Your legal review request {request_id} has been idle for 30 days. Please update or close."
+        message: "Your legal review request {request_id} has been idle for ${stale_request_days} days. Please update or close."
         
     auto_actions:
-      after_60_days:
+      after_double_stale_period:
         action: "mark_stale"
         label: "stale-request"
-      after_90_days:
+      after_triple_stale_period:
         action: "notify_for_closure"
         recipients: ["@requester", "@legal-team-lead"]
 

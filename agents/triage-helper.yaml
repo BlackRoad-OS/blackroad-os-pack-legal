@@ -34,12 +34,12 @@ outputs:
   - type: triage_summary
     description: "Summary of request with classification"
     example:
-      request_id: "LR-2024-001"
+      request_id: "LR-{YYYY}-{NNN}"
       title: "New Feature Privacy Review"
       risk_level: "MEDIUM"
       request_type: "privacy_review"
       suggested_reviewer: "@legal-team/privacy"
-      sla_due: "2024-01-15"
+      sla_due: "{calculated_sla_date}"
       
   - type: risk_flags
     description: "Flags indicating potential risk areas"

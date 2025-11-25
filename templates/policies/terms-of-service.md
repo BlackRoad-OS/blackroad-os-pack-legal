@@ -256,6 +256,11 @@ Email: [SUPPORT EMAIL]
 // Jurisdictional considerations apply
 ```
 
+**Jurisdictional Guidance:**
+- Refer to `templates/checklists/regulatory-context.md` for jurisdiction-specific requirements
+- Consult with legal counsel for each target jurisdiction
+- Common considerations: arbitration enforceability, consumer protection laws, data localization
+
 ---
 
 ## 📊 Review Requirements
