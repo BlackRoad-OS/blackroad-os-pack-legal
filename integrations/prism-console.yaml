@@ -1,0 +1,332 @@
+# 🕹️ Prism Console Integration
+
+# Configuration for legal/compliance views in blackroad-os-prism-console
+
+name: prism-console-integration
+version: "1.0.0"
+description: |
+  Defines how legal/compliance workflows and data appear in the 
+  BlackRoad OS Prism Console for visibility and management.
+
+# 📊 Dashboard Configuration
+dashboards:
+  # Main legal/compliance overview dashboard
+  - id: legal-compliance-overview
+    name: "Legal & Compliance Overview"
+    emoji: "⚖️"
+    description: "Central view for all legal/compliance activities"
+    
+    sections:
+      - id: active-reviews
+        name: "Active Legal Reviews"
+        type: "table"
+        data_source: "legal_review_requests"
+        filters:
+          state: ["requested", "in_review", "needs_info", "escalated"]
+        columns:
+          - field: "request_id"
+            label: "ID"
+          - field: "title"
+            label: "Request"
+          - field: "risk_level"
+            label: "Risk"
+            render: "risk_badge"
+          - field: "state"
+            label: "Status"
+            render: "state_badge"
+          - field: "assignee"
+            label: "Reviewer"
+          - field: "sla_due"
+            label: "SLA Due"
+            render: "countdown"
+        actions:
+          - label: "View Details"
+            action: "navigate_to_request"
+          - label: "Assign"
+            action: "assign_reviewer"
+            requires_permission: "legal_team"
+
+      - id: sla-status
+        name: "SLA Status"
+        type: "metrics"
+        data_source: "sla_metrics"
+        metrics:
+          - label: "On Track"
+            value: "on_track_count"
+            color: "green"
+          - label: "At Risk"
+            value: "at_risk_count"
+            color: "yellow"
+          - label: "Overdue"
+            value: "overdue_count"
+            color: "red"
+
+      - id: pending-approvals
+        name: "Pending Approvals"
+        type: "list"
+        data_source: "pending_approvals"
+        filters:
+          requires_human: true
+        display:
+          title: "title"
+          subtitle: "workflow_type"
+          badge: "risk_level"
+        actions:
+          - label: "Review"
+            action: "navigate_to_approval"
+
+  # Workflow-specific dashboards
+  - id: legal-review-queue
+    name: "Legal Review Queue"
+    emoji: "📋"
+    description: "Queue of pending legal review requests"
+    
+    sections:
+      - id: triage-queue
+        name: "Awaiting Triage"
+        type: "kanban"
+        data_source: "legal_review_requests"
+        columns:
+          - id: "new"
+            name: "New"
+            filter: { state: "requested", triaged: false }
+          - id: "triaged"
+            name: "Triaged"
+            filter: { state: "requested", triaged: true }
+          - id: "in_review"
+            name: "In Review"
+            filter: { state: "in_review" }
+          - id: "needs_info"
+            name: "Needs Info"
+            filter: { state: "needs_info" }
+        card_display:
+          title: "title"
+          subtitle: "requester"
+          badges: ["risk_level", "priority"]
+
+      - id: by-reviewer
+        name: "By Reviewer"
+        type: "grouped_list"
+        data_source: "legal_review_requests"
+        group_by: "assignee"
+        display:
+          title: "title"
+          subtitle: "risk_level"
+          status: "state"
+
+  # Policy management dashboard
+  - id: policy-management
+    name: "Policy Management"
+    emoji: "📜"
+    description: "View and manage policy documents"
+    
+    sections:
+      - id: active-policies
+        name: "Active Policies"
+        type: "table"
+        data_source: "policies"
+        filters:
+          status: "published"
+        columns:
+          - field: "policy_type"
+            label: "Policy"
+          - field: "version"
+            label: "Version"
+          - field: "effective_date"
+            label: "Effective"
+          - field: "next_review"
+            label: "Review Due"
+
+      - id: pending-updates
+        name: "Pending Updates"
+        type: "list"
+        data_source: "policy_updates"
+        filters:
+          state: ["draft", "internal_review", "legal_review", "exec_review", "comms_review"]
+        display:
+          title: "policy_name"
+          subtitle: "state"
+          progress: "completion_percentage"
+
+  # Checklist tracking dashboard
+  - id: checklist-tracking
+    name: "Checklist Tracking"
+    emoji: "✅"
+    description: "Track compliance checklist completion"
+    
+    sections:
+      - id: active-checklists
+        name: "Active Checklists"
+        type: "progress_list"
+        data_source: "checklists"
+        filters:
+          status: "in_progress"
+        display:
+          title: "checklist_name"
+          progress: "completion_percentage"
+          badges: ["blocking_items_count"]
+
+      - id: blocked-items
+        name: "Blocking Items"
+        type: "list"
+        data_source: "checklist_items"
+        filters:
+          required: true
+          complete: false
+          blocking: true
+        display:
+          title: "item_text"
+          subtitle: "checklist_name"
+          assignee: "assigned_to"
+
+  # Audit/archive dashboard
+  - id: audit-archive
+    name: "Audit & Archive"
+    emoji: "🧾"
+    description: "View archived legal artifacts and audit logs"
+    
+    sections:
+      - id: recent-archives
+        name: "Recent Archives"
+        type: "timeline"
+        data_source: "archive_events"
+        limit: 50
+        display:
+          event: "action"
+          actor: "archived_by"
+          timestamp: "archived_at"
+          details: "artifact_type"
+
+      - id: archive-search
+        name: "Search Archives"
+        type: "search"
+        data_source: "archive"
+        searchable_fields:
+          - workflow_id
+          - policy_type
+          - date_range
+
+# 🎨 UI Components
+ui_components:
+  # Risk level badge
+  risk_badge:
+    high:
+      color: "red"
+      text: "HIGH"
+      icon: "🔴"
+    medium:
+      color: "yellow"
+      text: "MEDIUM"
+      icon: "🟡"
+    low:
+      color: "green"
+      text: "LOW"
+      icon: "🟢"
+
+  # State badge
+  state_badge:
+    requested:
+      color: "blue"
+      text: "Requested"
+    in_review:
+      color: "yellow"
+      text: "In Review"
+    needs_info:
+      color: "orange"
+      text: "Needs Info"
+    escalated:
+      color: "red"
+      text: "Escalated"
+    approved:
+      color: "green"
+      text: "Approved"
+    rejected:
+      color: "red"
+      text: "Rejected"
+    archived:
+      color: "gray"
+      text: "Archived"
+
+# 🔔 Notifications in Console
+notifications:
+  - trigger: "new_review_request"
+    display: "toast"
+    message: "New legal review request: {title}"
+    action: "View"
+    
+  - trigger: "sla_warning"
+    display: "alert"
+    message: "SLA at risk for: {title}"
+    severity: "warning"
+    
+  - trigger: "approval_required"
+    display: "alert"
+    message: "Approval required: {title}"
+    severity: "info"
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    human_action_required: true
+
+# 🔐 Permissions
+permissions:
+  viewer:
+    can_view:
+      - legal-compliance-overview
+      - policy-management (active-policies only)
+    
+  legal_team:
+    inherits: viewer
+    can_view:
+      - legal-review-queue
+      - checklist-tracking
+    can_action:
+      - assign_reviewer
+      - add_comment
+      
+  legal_lead:
+    inherits: legal_team
+    can_view:
+      - audit-archive
+    can_action:
+      - approve
+      - reject
+      - escalate
+
+  compliance_officer:
+    inherits: legal_lead
+    can_view:
+      - all dashboards
+    can_export:
+      - audit reports
+      - compliance reports
+
+# 📊 Metrics & Reporting
+metrics:
+  real_time:
+    - active_reviews_count
+    - pending_approvals_count
+    - sla_on_track_percentage
+    - overdue_count
+    
+  periodic:
+    daily:
+      - reviews_completed
+      - average_resolution_time
+      - approvals_by_type
+    weekly:
+      - sla_performance
+      - risk_distribution
+    monthly:
+      - volume_trends
+      - compliance_metrics
+
+  export_formats:
+    - PDF
+    - CSV
+    - JSON
+
+# 🔗 Deep Links
+deep_links:
+  review_request: "/legal/reviews/{request_id}"
+  policy: "/legal/policies/{policy_type}/{version}"
+  checklist: "/legal/checklists/{checklist_id}"
+  archive: "/legal/archive/{artifact_id}"

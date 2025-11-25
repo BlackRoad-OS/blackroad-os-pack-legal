@@ -1,0 +1,408 @@
+# 🧪 Schema Validation Tests
+
+# Tests for validating templates and config schemas
+
+name: schema-validation-tests
+version: "1.0.0"
+description: |
+  Test definitions for schema validation of templates, forms,
+  workflows, and configuration files.
+
+# 📋 Workflow Schema Tests
+workflow_schema_tests:
+
+  # === Approval Flow Schema ===
+  - name: "approval-flow has required fields"
+    file: "workflows/approval-flow.yaml"
+    required_fields:
+      - name
+      - version
+      - description
+      - states
+    expected:
+      valid: true
+
+  - name: "approval-flow states have required structure"
+    file: "workflows/approval-flow.yaml"
+    for_each: "states"
+    required_fields:
+      - id
+      - name
+      - description
+    expected:
+      valid: true
+
+  - name: "approval-flow transitions reference valid states"
+    file: "workflows/approval-flow.yaml"
+    validation: "all transitions reference existing state IDs"
+    expected:
+      valid: true
+      all_transitions_valid: true
+
+  - name: "approval-flow has agent_permissions section"
+    file: "workflows/approval-flow.yaml"
+    required_sections:
+      - agent_permissions
+      - agent_permissions.can_do
+      - agent_permissions.cannot_do
+    expected:
+      valid: true
+
+  # === Policy Update Flow Schema ===
+  - name: "policy-update-flow has required fields"
+    file: "workflows/policy-update-flow.yaml"
+    required_fields:
+      - name
+      - version
+      - states
+      - policy_types
+    expected:
+      valid: true
+
+  - name: "policy-update-flow policy_types have required fields"
+    file: "workflows/policy-update-flow.yaml"
+    for_each: "policy_types"
+    required_fields:
+      - id
+      - name
+      - notification_required
+    expected:
+      valid: true
+
+  # === Labeling Rules Schema ===
+  - name: "labeling-rules labels have required fields"
+    file: "workflows/labeling-rules.yaml"
+    for_each: "labels"
+    required_fields:
+      - name
+      - color
+      - description
+    expected:
+      valid: true
+
+  - name: "labeling-rules colors are valid hex"
+    file: "workflows/labeling-rules.yaml"
+    for_each: "labels"
+    field: "color"
+    validation: "matches ^[0-9a-fA-F]{6}$"
+    expected:
+      valid: true
+
+# 📄 Template Schema Tests
+template_schema_tests:
+
+  # === Policy Templates ===
+  - name: "privacy-policy template has metadata"
+    file: "templates/policies/privacy-policy.md"
+    required_sections:
+      - "Template Metadata"
+      - "Required Sections Checklist"
+    expected:
+      valid: true
+
+  - name: "privacy-policy template has compliance markers"
+    file: "templates/policies/privacy-policy.md"
+    contains:
+      - "HIGH-RISK LEGAL FLOW"
+      - "EXAMPLE TEMPLATE ONLY"
+    expected:
+      valid: true
+
+  - name: "terms-of-service template has metadata"
+    file: "templates/policies/terms-of-service.md"
+    required_sections:
+      - "Template Metadata"
+      - "Required Sections Checklist"
+    expected:
+      valid: true
+
+  - name: "acceptable-use template has metadata"
+    file: "templates/policies/acceptable-use.md"
+    required_sections:
+      - "Template Metadata"
+      - "Required Sections Checklist"
+    expected:
+      valid: true
+
+  - name: "security-overview template has metadata"
+    file: "templates/policies/security-overview.md"
+    required_sections:
+      - "Template Metadata"
+      - "Required Sections Checklist"
+    expected:
+      valid: true
+
+  # === Checklist Templates ===
+  - name: "feature-launch checklist has required structure"
+    file: "templates/checklists/feature-launch.md"
+    required_sections:
+      - "When This Is Used"
+      - "Who Must Be Involved"
+      - "What Must Be True"
+      - "Final Approval"
+    expected:
+      valid: true
+
+  - name: "regulatory-context checklist has required structure"
+    file: "templates/checklists/regulatory-context.md"
+    required_sections:
+      - "When This Is Used"
+      - "Who Must Be Involved"
+      - "Final Approval"
+    expected:
+      valid: true
+
+  - name: "checklists contain high-risk markers"
+    files:
+      - "templates/checklists/feature-launch.md"
+      - "templates/checklists/regulatory-context.md"
+    contains:
+      - "HIGH-RISK LEGAL FLOW"
+    expected:
+      valid: true
+
+  # === Form Templates ===
+  - name: "legal-review-request form has required sections"
+    file: "templates/forms/legal-review-request.md"
+    required_sections:
+      - "Requester Information"
+      - "Request Details"
+      - "Risk Assessment"
+      - "Timeline"
+    expected:
+      valid: true
+
+  - name: "legal-review-request form has risk indicators"
+    file: "templates/forms/legal-review-request.md"
+    required_sections:
+      - "High-Risk Indicators"
+      - "Medium-Risk Indicators"
+      - "Low-Risk Indicators"
+    expected:
+      valid: true
+
+# 🤖 Agent Schema Tests
+agent_schema_tests:
+
+  - name: "triage-helper has required fields"
+    file: "agents/triage-helper.yaml"
+    required_fields:
+      - name
+      - version
+      - description
+      - purpose
+      - inputs
+      - outputs
+      - capabilities
+      - restrictions
+    expected:
+      valid: true
+
+  - name: "triage-helper has both allowed and prohibited capabilities"
+    file: "agents/triage-helper.yaml"
+    required_sections:
+      - capabilities.allowed
+      - restrictions.prohibited
+    expected:
+      valid: true
+
+  - name: "checklist-enforcer has required fields"
+    file: "agents/checklist-enforcer.yaml"
+    required_fields:
+      - name
+      - version
+      - capabilities
+      - restrictions
+    expected:
+      valid: true
+
+  - name: "archive-pinger has required fields"
+    file: "agents/archive-pinger.yaml"
+    required_fields:
+      - name
+      - version
+      - capabilities
+      - restrictions
+      - artifact_types
+    expected:
+      valid: true
+
+  - name: "all agents have testing section"
+    files:
+      - "agents/triage-helper.yaml"
+      - "agents/checklist-enforcer.yaml"
+      - "agents/archive-pinger.yaml"
+    required_sections:
+      - testing
+      - testing.scenarios
+    expected:
+      valid: true
+
+# 🔗 Integration Schema Tests
+integration_schema_tests:
+
+  - name: "prism-console integration has dashboards"
+    file: "integrations/prism-console.yaml"
+    required_fields:
+      - name
+      - version
+      - dashboards
+    expected:
+      valid: true
+
+  - name: "prism-console dashboards have required structure"
+    file: "integrations/prism-console.yaml"
+    for_each: "dashboards"
+    required_fields:
+      - id
+      - name
+      - sections
+    expected:
+      valid: true
+
+  - name: "archive integration has artifact definitions"
+    file: "integrations/archive.yaml"
+    required_sections:
+      - archive_structure
+      - artifacts
+      - retention
+    expected:
+      valid: true
+
+  - name: "operator integration has job definitions"
+    file: "integrations/operator.yaml"
+    required_sections:
+      - jobs
+    expected:
+      valid: true
+
+  - name: "operator jobs have required structure"
+    file: "integrations/operator.yaml"
+    for_each: "jobs"
+    required_fields:
+      - id
+      - name
+      - description
+    expected:
+      valid: true
+
+# 🔗 Cross-Reference Validation Tests
+cross_reference_tests:
+
+  - name: "workflow states referenced in agents exist"
+    agents:
+      - "agents/triage-helper.yaml"
+      - "agents/checklist-enforcer.yaml"
+    workflows:
+      - "workflows/approval-flow.yaml"
+      - "workflows/policy-update-flow.yaml"
+    validation: "agent references match workflow states"
+    expected:
+      valid: true
+
+  - name: "integration repos are consistent"
+    files:
+      - "integrations/prism-console.yaml"
+      - "integrations/archive.yaml"
+      - "integrations/operator.yaml"
+    validation: "repo references are consistent across integrations"
+    expected:
+      repos:
+        - "blackroad-os-prism-console"
+        - "blackroad-os-archive"
+        - "blackroad-os-operator"
+
+  - name: "labels defined in labeling-rules are used in workflows"
+    labeling_rules: "workflows/labeling-rules.yaml"
+    workflows:
+      - "workflows/approval-flow.yaml"
+      - "workflows/policy-update-flow.yaml"
+    validation: "workflow labels exist in labeling rules"
+    expected:
+      valid: true
+
+  - name: "artifact types in agents match archive integration"
+    agents:
+      - "agents/archive-pinger.yaml"
+    archive: "integrations/archive.yaml"
+    validation: "artifact types are consistent"
+    expected:
+      valid: true
+
+# 📜 README Validation Tests
+readme_tests:
+
+  - name: "README has all required sections"
+    file: "README.md"
+    required_sections:
+      - "Mission"
+      - "What This Pack Owns"
+      - "What This Pack Does NOT Own"
+      - "Repository Structure"
+      - "Testing / Safety"
+      - "Compliance Guardrails"
+      - "Design Principles"
+      - "Emoji Legend"
+      - "Success Criteria"
+    expected:
+      valid: true
+
+  - name: "README lists all directories"
+    file: "README.md"
+    contains:
+      - "workflows/"
+      - "templates/"
+      - "agents/"
+      - "integrations/"
+      - "tests/"
+    expected:
+      valid: true
+
+  - name: "README has high-risk markers"
+    file: "README.md"
+    contains:
+      - "HIGH-RISK LEGAL FLOW"
+    expected:
+      valid: true
+
+# 🔐 Security & Compliance Markers Tests
+compliance_marker_tests:
+
+  - name: "high-risk workflows have HIGH-RISK marker"
+    files:
+      - "workflows/approval-flow.yaml"
+      - "workflows/policy-update-flow.yaml"
+    contains:
+      - "HIGH-RISK LEGAL FLOW"
+    expected:
+      valid: true
+
+  - name: "high-risk agents have HIGH-RISK marker"
+    files:
+      - "agents/triage-helper.yaml"
+      - "agents/checklist-enforcer.yaml"
+      - "agents/archive-pinger.yaml"
+    contains:
+      - "HIGH-RISK"
+    expected:
+      valid: true
+
+  - name: "templates have EXAMPLE disclaimer"
+    files:
+      - "templates/policies/privacy-policy.md"
+      - "templates/policies/terms-of-service.md"
+      - "templates/policies/acceptable-use.md"
+      - "templates/policies/security-overview.md"
+    contains:
+      - "EXAMPLE TEMPLATE ONLY"
+    expected:
+      valid: true
+
+  - name: "archive integration has immutability rules"
+    file: "integrations/archive.yaml"
+    required_sections:
+      - immutability
+      - immutability.enforce
+    expected:
+      valid: true
+      immutability_enforced: true

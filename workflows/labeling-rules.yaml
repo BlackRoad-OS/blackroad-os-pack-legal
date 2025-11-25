@@ -1,0 +1,196 @@
+# 🏷️ Legal/Compliance Labeling Rules
+# Defines Issue/PR labels for legal review workflows
+
+name: legal-labeling-rules
+version: "1.0.0"
+description: |
+  Issue/PR labeling rules for legal review, comms sign-off, and compliance tracking.
+  These labels trigger appropriate workflows and agent behaviors.
+
+# ⚖️ Label Definitions
+labels:
+  # === Legal Review Labels ===
+  - name: "needs-legal-review"
+    color: "d73a4a"  # Red
+    description: "Requires legal team review before proceeding 🔴⚖️"
+    triggers:
+      - notify_legal_team
+      - block_merge
+    auto_apply:
+      - path_contains: ["terms", "privacy", "legal", "policy", "compliance"]
+      - pr_title_contains: ["terms", "privacy", "legal", "policy"]
+
+  - name: "legal-review-in-progress"
+    color: "fbca04"  # Yellow
+    description: "Legal review currently in progress 🟡⚖️"
+    triggers:
+      - track_review_time
+    requires_human: true
+
+  - name: "legal-approved"
+    color: "0e8a16"  # Green
+    description: "Legal team has approved this change ✅⚖️"
+    triggers:
+      - allow_merge
+      - archive_decision
+    requires_human: true
+
+  - name: "legal-rejected"
+    color: "b60205"  # Dark Red
+    description: "Legal team has rejected this change ❌⚖️"
+    triggers:
+      - block_merge
+      - archive_decision
+    requires_human: true
+
+  # === Comms Sign-off Labels ===
+  - name: "needs-comms-signoff"
+    color: "1d76db"  # Blue
+    description: "Requires communications team sign-off 📢"
+    triggers:
+      - notify_comms_team
+    auto_apply:
+      - path_contains: ["announcement", "press", "blog", "public"]
+
+  - name: "comms-approved"
+    color: "0e8a16"  # Green
+    description: "Communications team has approved ✅📢"
+    requires_human: true
+
+  # === Risk Level Labels ===
+  - name: "high-risk-legal"
+    color: "b60205"  # Dark Red
+    description: "HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED 🚫"
+    triggers:
+      - mandatory_human_approval
+      - executive_notification
+      - archive_all_artifacts
+    # This label cannot be auto-removed
+    protected: true
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    marker: "HIGH-RISK"
+    risk_domains:
+      - finance
+      - trading
+      - custody
+      - identity
+      - kyc
+      - personal_data
+      - regulatory
+
+  - name: "medium-risk-legal"
+    color: "fbca04"  # Yellow
+    description: "Medium risk - requires legal review ⚠️⚖️"
+    triggers:
+      - request_legal_review
+
+  - name: "low-risk-legal"
+    color: "c5def5"  # Light Blue
+    description: "Low risk - standard review process 📋"
+    triggers:
+      - standard_review
+
+  # === Compliance Labels ===
+  - name: "compliance-required"
+    color: "7057ff"  # Purple
+    description: "Compliance verification required 🔏"
+    triggers:
+      - add_compliance_checklist
+
+  - name: "audit-trail-required"
+    color: "e99695"  # Light Red
+    description: "Changes must be logged to audit trail 🧾"
+    triggers:
+      - enable_full_audit_logging
+      - archive_to_blackroad_archive
+
+  # === Policy Update Labels ===
+  - name: "policy-update"
+    color: "006b75"  # Teal
+    description: "Policy document update 📜"
+    triggers:
+      - policy_update_workflow
+    auto_apply:
+      - path_contains: ["policies/", "terms/"]
+
+  - name: "terms-change"
+    color: "006b75"  # Teal
+    description: "Terms of service change 📜"
+    triggers:
+      - terms_change_workflow
+      - customer_notification_required
+
+# 🔧 Auto-labeling Rules
+auto_labeling:
+  enabled: true
+  rules:
+    # Path-based auto-labeling
+    - match:
+        type: path
+        patterns:
+          - "**/*privacy*"
+          - "**/*terms*"
+          - "**/*legal*"
+          - "**/*compliance*"
+          - "**/*policy*"
+      apply:
+        - "needs-legal-review"
+        - "audit-trail-required"
+
+    # Content-based auto-labeling
+    - match:
+        type: content
+        patterns:
+          - "personal data"
+          - "PII"
+          - "user data"
+          - "GDPR"
+          - "CCPA"
+      apply:
+        - "high-risk-legal"
+        - "compliance-required"
+
+    # PR title patterns
+    - match:
+        type: pr_title
+        patterns:
+          - "^\\[LEGAL\\]"
+          - "^\\[COMPLIANCE\\]"
+      apply:
+        - "needs-legal-review"
+
+# 🤖 Agent Permissions
+agent_permissions:
+  can_apply:
+    - "needs-legal-review"
+    - "needs-comms-signoff"
+    - "medium-risk-legal"
+    - "low-risk-legal"
+    - "compliance-required"
+    - "audit-trail-required"
+    - "policy-update"
+    - "terms-change"
+  
+  # Agents CANNOT apply these labels - human only
+  cannot_apply:
+    - "legal-approved"
+    - "legal-rejected"
+    - "legal-review-in-progress"
+    - "comms-approved"
+    - "high-risk-legal"
+
+  # Agents CANNOT remove these labels - human only
+  cannot_remove:
+    - "high-risk-legal"
+    - "legal-approved"
+    - "legal-rejected"
+    - "audit-trail-required"
+
+# 📊 Reporting
+metrics:
+  track:
+    - label_application_time
+    - time_in_review
+    - approval_rate
+    - rejection_reasons
+  export_to: "blackroad-os-archive"

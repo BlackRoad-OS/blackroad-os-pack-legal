@@ -1,0 +1,383 @@
+# ⚙️ Operator Integration
+
+# Configuration for legal workflow jobs in blackroad-os-operator
+
+name: operator-integration
+version: "1.0.0"
+description: |
+  Defines scheduled and triggered jobs for legal workflows that run
+  via blackroad-os-operator, such as artifact collection, reminders,
+  and compliance checks.
+
+# 🎯 Purpose
+purpose:
+  - Automate routine legal workflow tasks
+  - Schedule compliance checks and reminders
+  - Collect and process legal artifacts
+  - Generate reports and metrics
+
+# 📋 Job Definitions
+jobs:
+  # ============================================
+  # SLA & Reminder Jobs
+  # ============================================
+  
+  - id: sla_check
+    name: "Legal Review SLA Check"
+    description: "Check SLA status for all active legal reviews"
+    
+    schedule:
+      type: "cron"
+      expression: "0 */2 * * *"  # Every 2 hours
+      timezone: "UTC"
+    
+    trigger:
+      type: "scheduled"
+      
+    action:
+      type: "script"
+      script: |
+        # Check all active legal reviews
+        # Alert on approaching or breached SLAs
+      outputs:
+        - sla_status_report
+        - at_risk_list
+        - overdue_list
+        
+    notifications:
+      on_at_risk:
+        recipients: ["@legal-team-lead"]
+        channel: "slack"
+        message: "SLA at risk for {count} legal reviews"
+      on_overdue:
+        recipients: ["@legal-team-lead", "@compliance-officer"]
+        channel: "slack"
+        message: "SLA OVERDUE for {count} legal reviews"
+        severity: "high"
+
+  - id: daily_legal_digest
+    name: "Daily Legal Digest"
+    description: "Generate daily summary of legal activities"
+    
+    schedule:
+      type: "cron"
+      expression: "0 8 * * 1-5"  # 8 AM weekdays
+      timezone: "America/New_York"
+    
+    action:
+      type: "script"
+      outputs:
+        - daily_digest_report
+        
+    notifications:
+      always:
+        recipients: ["legal-team@company.com"]
+        channel: "email"
+        template: "daily_legal_digest"
+
+  - id: pending_approvals_reminder
+    name: "Pending Approvals Reminder"
+    description: "Remind reviewers of pending approvals"
+    
+    schedule:
+      type: "cron"
+      expression: "0 9 * * 1-5"  # 9 AM weekdays
+      timezone: "America/New_York"
+    
+    action:
+      type: "script"
+      outputs:
+        - pending_by_reviewer
+        
+    notifications:
+      per_reviewer:
+        recipients: ["{reviewer}"]
+        channel: "slack"
+        message: "You have {count} pending legal review(s)"
+
+  # ============================================
+  # Archive & Artifact Jobs
+  # ============================================
+  
+  - id: archive_legal_review
+    name: "Archive Completed Legal Review"
+    description: "Archive artifacts when a legal review is completed"
+    
+    schedule:
+      type: "triggered"
+    
+    trigger:
+      type: "event"
+      event: "legal_review_completed"
+      source: "workflows/approval-flow.yaml"
+      
+    action:
+      type: "archive"
+      collect:
+        - approval_record
+        - review_summary
+        - attachments
+        - correspondence
+      destination: "blackroad-os-archive/legal-reviews/{year}/{month}/{workflow_id}/"
+      generate_manifest: true
+      
+    notifications:
+      on_success:
+        recipients: ["@archive-pinger"]
+        channel: "internal"
+        message: "Legal review {workflow_id} archived successfully"
+      on_failure:
+        recipients: ["@legal-team-lead", "@compliance-officer"]
+        channel: "slack"
+        message: "FAILED to archive legal review {workflow_id}"
+        severity: "critical"
+
+  - id: archive_policy_version
+    name: "Archive Policy Version"
+    description: "Archive policy when a new version is published"
+    
+    schedule:
+      type: "triggered"
+    
+    trigger:
+      type: "event"
+      event: "policy_published"
+      source: "workflows/policy-update-flow.yaml"
+      
+    action:
+      type: "archive"
+      collect:
+        - policy_content
+        - change_log
+        - approval_records
+        - notification_records
+      destination: "blackroad-os-archive/policies/{policy_type}/"
+      
+    post_actions:
+      - archive_previous_version
+      - update_policy_index
+
+  - id: collect_launch_artifacts
+    name: "Collect Feature Launch Artifacts"
+    description: "Collect all legal/compliance artifacts for a feature launch"
+    
+    schedule:
+      type: "triggered"
+    
+    trigger:
+      type: "event"
+      event: "launch_approved"
+      # Or manual trigger with launch_id parameter
+      
+    action:
+      type: "collect"
+      artifacts:
+        - feature_launch_checklist
+        - legal_approvals
+        - privacy_assessments
+        - security_reviews
+        - compliance_attestations
+      destination: "blackroad-os-archive/launches/{launch_id}/"
+      generate_summary: true
+      
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    high_risk:
+      marker: "HIGH-RISK"
+      additional_artifacts:
+        - executive_approvals
+        - risk_assessments
+      notify_on_complete:
+        - compliance_officer
+        - legal_lead
+
+  - id: weekly_archive_integrity
+    name: "Weekly Archive Integrity Check"
+    description: "Verify integrity of archived legal artifacts"
+    
+    schedule:
+      type: "cron"
+      expression: "0 2 * * 0"  # 2 AM Sundays
+      timezone: "UTC"
+    
+    action:
+      type: "verify"
+      scope: "all_legal_artifacts"
+      checks:
+        - checksum_verification
+        - metadata_completeness
+        - manifest_accuracy
+        
+    notifications:
+      on_failure:
+        recipients: ["@compliance-officer", "@security-team"]
+        channel: "pagerduty"
+        message: "Archive integrity check FAILED"
+        severity: "critical"
+
+  # ============================================
+  # Compliance & Reporting Jobs
+  # ============================================
+  
+  - id: compliance_report_weekly
+    name: "Weekly Compliance Report"
+    description: "Generate weekly legal/compliance metrics report"
+    
+    schedule:
+      type: "cron"
+      expression: "0 6 * * 1"  # 6 AM Mondays
+      timezone: "America/New_York"
+    
+    action:
+      type: "report"
+      template: "weekly_compliance_report"
+      metrics:
+        - reviews_completed
+        - average_resolution_time
+        - sla_performance
+        - approval_rate
+        - pending_count
+        - risk_distribution
+        
+    outputs:
+      - report_pdf
+      - metrics_json
+      
+    notifications:
+      always:
+        recipients: ["legal-team@company.com", "compliance@company.com"]
+        channel: "email"
+        attachments: ["report_pdf"]
+
+  - id: policy_review_reminder
+    name: "Policy Review Reminder"
+    description: "Remind of policies approaching review date"
+    
+    schedule:
+      type: "cron"
+      expression: "0 9 1 * *"  # 9 AM on 1st of each month
+      timezone: "America/New_York"
+    
+    action:
+      type: "check"
+      query: "policies where next_review < now() + 30 days"
+      
+    notifications:
+      per_policy:
+        recipients: ["@policy-owner", "@legal-team-lead"]
+        channel: "email"
+        message: "Policy {policy_name} review due on {review_date}"
+
+  - id: retention_review
+    name: "Retention Period Review"
+    description: "Review artifacts approaching retention period end"
+    
+    schedule:
+      type: "cron"
+      expression: "0 3 1 * *"  # 3 AM on 1st of each month
+      timezone: "UTC"
+    
+    action:
+      type: "report"
+      query: "artifacts where retention_end < now() + 90 days"
+      
+    notifications:
+      always:
+        recipients: ["@compliance-officer"]
+        channel: "email"
+        template: "retention_review"
+
+  # ============================================
+  # Cleanup & Maintenance Jobs
+  # ============================================
+  
+  - id: stale_request_cleanup
+    name: "Stale Request Cleanup"
+    description: "Identify and handle stale legal review requests"
+    
+    schedule:
+      type: "cron"
+      expression: "0 4 * * *"  # 4 AM daily
+      timezone: "UTC"
+    
+    action:
+      type: "check"
+      query: "legal_reviews where state == 'needs_info' and updated_at < now() - 30 days"
+      
+    notifications:
+      per_request:
+        recipients: ["@requester"]
+        channel: "email"
+        message: "Your legal review request {request_id} has been idle for 30 days. Please update or close."
+        
+    auto_actions:
+      after_60_days:
+        action: "mark_stale"
+        label: "stale-request"
+      after_90_days:
+        action: "notify_for_closure"
+        recipients: ["@requester", "@legal-team-lead"]
+
+# 🔧 Job Configuration
+configuration:
+  defaults:
+    timeout: "30m"
+    retry:
+      attempts: 3
+      backoff: "exponential"
+    logging:
+      level: "info"
+      destination: "operator-logs"
+      
+  resources:
+    cpu: "100m"
+    memory: "256Mi"
+
+# 🔐 Security
+security:
+  # Jobs run with limited permissions
+  service_account: "legal-pack-operator"
+  
+  permissions:
+    - read: "legal_reviews"
+    - read: "policies"
+    - read: "checklists"
+    - write: "archive" 
+    - write: "notifications"
+    
+  secrets:
+    - name: "archive-api-key"
+      mount: "/secrets/archive"
+    - name: "notification-tokens"
+      mount: "/secrets/notifications"
+
+# 📊 Monitoring
+monitoring:
+  metrics:
+    - job_duration
+    - job_success_rate
+    - artifacts_archived
+    - notifications_sent
+    
+  alerts:
+    job_failure:
+      threshold: 2  # consecutive failures
+      recipients: ["@ops-team"]
+      
+    long_running:
+      threshold: "1h"
+      recipients: ["@ops-team"]
+
+# 🔗 Integration Points
+integrations:
+  operator:
+    repo: "blackroad-os-operator"
+    job_type: "legal-pack"
+    
+  archive:
+    repo: "blackroad-os-archive"
+    api: "archive-api"
+    
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    notifications: true
+    metrics: true

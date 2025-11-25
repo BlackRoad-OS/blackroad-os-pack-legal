@@ -1,0 +1,431 @@
+# 🧪 Workflow State Machine Tests
+
+# Tests for legal workflow state transitions
+
+name: workflow-states-tests
+version: "1.0.0"
+description: |
+  Test definitions for legal workflow state machines.
+  Validates state transitions, approval requirements, and agent permissions.
+
+# 🔁 Approval Flow Tests
+approval_flow_tests:
+  
+  # === State Transition Tests ===
+  
+  - name: "requested → in_review: valid transition"
+    workflow: "approval-flow"
+    initial_state: "requested"
+    transition_to: "in_review"
+    actor_role: "legal_team_member"
+    expected:
+      allowed: true
+      new_state: "in_review"
+      actions_triggered:
+        - assign_reviewer
+        - pause_sla_timer
+        - add_label: "legal-review-in-progress"
+
+  - name: "requested → in_review: unauthorized actor"
+    workflow: "approval-flow"
+    initial_state: "requested"
+    transition_to: "in_review"
+    actor_role: "requester"
+    expected:
+      allowed: false
+      error: "Actor does not have permission for this transition"
+
+  - name: "in_review → approved: requires human"
+    workflow: "approval-flow"
+    initial_state: "in_review"
+    transition_to: "approved"
+    actor_role: "legal_team_member"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "approved"
+      actions_triggered:
+        - remove_label: "legal-review-in-progress"
+        - add_label: "legal-approved"
+        - record_approval
+        - notify_requester
+
+  - name: "in_review → approved: agent cannot approve"
+    workflow: "approval-flow"
+    initial_state: "in_review"
+    transition_to: "approved"
+    actor_role: "legal_team_member"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Approval requires human judgment"
+      # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+
+  - name: "in_review → rejected: requires human"
+    workflow: "approval-flow"
+    initial_state: "in_review"
+    transition_to: "rejected"
+    actor_role: "legal_team_member"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "rejected"
+
+  - name: "in_review → rejected: agent cannot reject"
+    workflow: "approval-flow"
+    initial_state: "in_review"
+    transition_to: "rejected"
+    actor_role: "legal_team_member"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Rejection requires human judgment"
+
+  - name: "in_review → escalated: valid transition"
+    workflow: "approval-flow"
+    initial_state: "in_review"
+    transition_to: "escalated"
+    actor_role: "legal_team_member"
+    expected:
+      allowed: true
+      new_state: "escalated"
+      actions_triggered:
+        - notify_legal_lead
+        - add_label: "high-risk-legal"
+
+  - name: "escalated → approved: requires legal_lead"
+    workflow: "approval-flow"
+    initial_state: "escalated"
+    transition_to: "approved"
+    actor_role: "legal_lead"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "approved"
+
+  - name: "escalated → approved: team member cannot approve escalated"
+    workflow: "approval-flow"
+    initial_state: "escalated"
+    transition_to: "approved"
+    actor_role: "legal_team_member"
+    actor_type: "human"
+    expected:
+      allowed: false
+      error: "Escalated approvals require legal lead"
+
+  - name: "escalated → approved: agent cannot approve escalated"
+    workflow: "approval-flow"
+    initial_state: "escalated"
+    transition_to: "approved"
+    actor_role: "legal_lead"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Escalated approvals require legal lead"
+      # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+
+  - name: "approved → archived: auto transition allowed"
+    workflow: "approval-flow"
+    initial_state: "approved"
+    transition_to: "archived"
+    actor_type: "agent"
+    trigger: "auto"
+    expected:
+      allowed: true
+      new_state: "archived"
+      actions_triggered:
+        - archive_to_blackroad_archive
+        - generate_audit_record
+
+  - name: "needs_info → in_review: on info provided"
+    workflow: "approval-flow"
+    initial_state: "needs_info"
+    transition_to: "in_review"
+    actor_role: "requester"
+    trigger: "info_provided"
+    expected:
+      allowed: true
+      new_state: "in_review"
+
+  - name: "cancelled → archived: auto transition"
+    workflow: "approval-flow"
+    initial_state: "cancelled"
+    transition_to: "archived"
+    actor_type: "agent"
+    trigger: "auto"
+    expected:
+      allowed: true
+      new_state: "archived"
+
+  # === Final State Tests ===
+
+  - name: "archived is final state"
+    workflow: "approval-flow"
+    initial_state: "archived"
+    transition_to: "any"
+    expected:
+      allowed: false
+      error: "Cannot transition from final state"
+
+# 📜 Policy Update Flow Tests
+policy_update_flow_tests:
+
+  - name: "draft → internal_review: owner can transition"
+    workflow: "policy-update-flow"
+    initial_state: "draft"
+    transition_to: "internal_review"
+    actor_role: "policy_owner"
+    expected:
+      allowed: true
+      new_state: "internal_review"
+
+  - name: "legal_review → legal_approved: requires human"
+    workflow: "policy-update-flow"
+    initial_state: "legal_review"
+    transition_to: "legal_approved"
+    actor_role: "legal_reviewer"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "legal_approved"
+
+  - name: "legal_review → legal_approved: agent cannot approve"
+    workflow: "policy-update-flow"
+    initial_state: "legal_review"
+    transition_to: "legal_approved"
+    actor_role: "legal_reviewer"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Policy approval requires human review"
+
+  - name: "high_risk policy requires exec_review"
+    workflow: "policy-update-flow"
+    initial_state: "legal_approved"
+    policy_type: "privacy_policy"
+    policy_high_risk: true
+    expected:
+      next_state_options:
+        - exec_review
+      cannot_skip_to:
+        - ready_to_publish
+        - published
+
+  - name: "exec_review → comms_review: requires executive"
+    workflow: "policy-update-flow"
+    initial_state: "exec_review"
+    transition_to: "comms_review"
+    actor_role: "executive_approver"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "comms_review"
+      # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+
+  - name: "exec_review → comms_review: agent cannot approve"
+    workflow: "policy-update-flow"
+    initial_state: "exec_review"
+    transition_to: "comms_review"
+    actor_role: "executive_approver"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Executive approval requires human"
+
+  - name: "ready_to_publish → published: requires human"
+    workflow: "policy-update-flow"
+    initial_state: "ready_to_publish"
+    transition_to: "published"
+    actor_role: "policy_owner"
+    actor_type: "human"
+    expected:
+      allowed: true
+      new_state: "published"
+      actions_triggered:
+        - publish_policy
+        - send_customer_notifications
+
+# ☑️ Checklist Completion Tests
+checklist_tests:
+
+  - name: "cannot complete without required items"
+    checklist: "feature-launch"
+    items:
+      - { text: "Legal Sign-off", required: true, complete: false }
+      - { text: "Security Review", required: true, complete: true }
+    transition_request: "mark_complete"
+    expected:
+      allowed: false
+      blocking_items:
+        - "Legal Sign-off"
+      error: "Required checklist items incomplete"
+
+  - name: "can complete with all required items done"
+    checklist: "feature-launch"
+    items:
+      - { text: "Legal Sign-off", required: true, complete: true }
+      - { text: "Security Review", required: true, complete: true }
+      - { text: "Optional item", required: false, complete: false }
+    transition_request: "mark_complete"
+    expected:
+      allowed: true
+      warning: "1 optional item incomplete"
+
+  - name: "agent cannot mark items complete"
+    checklist: "feature-launch"
+    action: "complete_item"
+    item: "Legal Sign-off"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Agent cannot complete checklist items"
+
+  - name: "agent cannot skip required items"
+    checklist: "feature-launch"
+    action: "skip_item"
+    item: "Legal Sign-off"
+    item_required: true
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "Cannot skip required checklist items"
+
+# 🤖 Agent Permission Tests
+agent_permission_tests:
+
+  # Triage Helper Agent
+  - name: "triage agent can apply needs-legal-review label"
+    agent: "triage-helper"
+    action: "apply_label"
+    label: "needs-legal-review"
+    expected:
+      allowed: true
+
+  - name: "triage agent cannot apply legal-approved label"
+    agent: "triage-helper"
+    action: "apply_label"
+    label: "legal-approved"
+    expected:
+      allowed: false
+      error: "Agent cannot apply approval labels"
+
+  - name: "triage agent cannot apply high-risk-legal label"
+    agent: "triage-helper"
+    action: "apply_label"
+    label: "high-risk-legal"
+    expected:
+      allowed: false
+      error: "Agent cannot apply high-risk labels"
+
+  - name: "triage agent cannot remove audit-trail-required label"
+    agent: "triage-helper"
+    action: "remove_label"
+    label: "audit-trail-required"
+    expected:
+      allowed: false
+      error: "Agent cannot remove audit labels"
+
+  # Checklist Enforcer Agent
+  - name: "checklist agent can block transition"
+    agent: "checklist-enforcer"
+    action: "block_transition"
+    reason: "required_items_incomplete"
+    expected:
+      allowed: true
+
+  - name: "checklist agent cannot complete items"
+    agent: "checklist-enforcer"
+    action: "complete_item"
+    expected:
+      allowed: false
+      error: "Agent cannot complete checklist items"
+
+  - name: "checklist agent cannot skip required items"
+    agent: "checklist-enforcer"
+    action: "skip_required_item"
+    expected:
+      allowed: false
+      error: "Agent cannot skip required items"
+
+  # Archive Pinger Agent
+  - name: "archive agent can create artifacts"
+    agent: "archive-pinger"
+    action: "create_artifact"
+    expected:
+      allowed: true
+
+  - name: "archive agent cannot delete artifacts"
+    agent: "archive-pinger"
+    action: "delete_artifact"
+    expected:
+      allowed: false
+      error: "Agent cannot delete archived artifacts"
+
+  - name: "archive agent cannot modify artifacts"
+    agent: "archive-pinger"
+    action: "modify_artifact"
+    expected:
+      allowed: false
+      error: "Agent cannot modify archived artifacts"
+
+# 🔐 High-Risk Flow Tests
+high_risk_tests:
+
+  - name: "high-risk label cannot be auto-removed"
+    workflow: "any"
+    action: "remove_label"
+    label: "high-risk-legal"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      error: "High-risk label is protected"
+      # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+
+  - name: "high-risk workflow requires mandatory human approval"
+    workflow: "approval-flow"
+    risk_level: "high"
+    transition: "in_review → approved"
+    actor_type: "agent"
+    expected:
+      allowed: false
+      requires: "human_approval"
+      marker: "HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED"
+
+  - name: "high-risk workflow archives immediately"
+    workflow: "approval-flow"
+    risk_level: "high"
+    state: "approved"
+    expected:
+      archive_timing: "immediate"
+      additional_artifacts_required:
+        - executive_approval
+        - risk_assessment
+
+# ⏱️ SLA Tests
+sla_tests:
+
+  - name: "SLA timer starts on request"
+    workflow: "approval-flow"
+    event: "request_created"
+    expected:
+      sla_timer_started: true
+      response_time_sla: "2 business days"
+
+  - name: "SLA timer pauses in review"
+    workflow: "approval-flow"
+    transition: "requested → in_review"
+    expected:
+      sla_timer_paused: true
+
+  - name: "SLA timer stops on approval"
+    workflow: "approval-flow"
+    transition: "in_review → approved"
+    expected:
+      sla_timer_stopped: true
+
+  - name: "high priority has faster SLA"
+    workflow: "approval-flow"
+    priority: "critical"
+    expected:
+      response_time_sla: "4 hours"
+      resolution_time_sla: "24 hours"
