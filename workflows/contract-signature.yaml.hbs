@@ -1,0 +1,29 @@
+# name: contract-signature
+# required_secrets:
+#   - SIGNING_TOKEN
+# reviewers:
+#   - legal-team
+
+on:
+  workflow_dispatch:
+    inputs:
+      contract:
+        description: Contract slug
+        required: true
+      signer:
+        description: Signer email
+        required: true
+jobs:
+  prepare-signature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render contract
+        run: |
+          pnpm ts-node lib/template.ts contracts/{{ contract }}.md > rendered.md
+      - name: Request signature
+        env:
+          SIGNING_TOKEN: ${{ secrets.SIGNING_TOKEN }}
+        run: |
+          echo "Dispatching signature for {{ contract }} to ${{ github.event.inputs.signer }}"
+          # TODO(legal-pack-next): integrate e-signature webhook
