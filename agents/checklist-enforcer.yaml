@@ -1,0 +1,305 @@
+# 🤖 Checklist Enforcer Agent
+
+# Agent for enforcing checklist completion in legal/compliance workflows
+
+name: legal-checklist-enforcer
+version: "1.0.0"
+description: |
+  Checklist enforcer agent that ensures required checklist items are completed
+  before workflows can proceed to the next stage.
+  
+  🧍‍♀️ NOTE: This agent ENFORCES completion requirements - it does NOT
+  complete checklist items. All items must be completed by humans.
+
+# 🎯 Agent Purpose
+purpose:
+  primary: "Enforce checklist completion requirements in legal workflows"
+  secondary:
+    - "Track checklist item completion status"
+    - "Block transitions when requirements not met"
+    - "Notify stakeholders of pending items"
+    - "Generate compliance reports"
+
+# 📥 Inputs This Agent Processes
+inputs:
+  - type: checklist
+    source: "templates/checklists/*.md"
+  - type: workflow_transition
+    source: "workflows/*.yaml"
+  - type: pull_request
+    conditions:
+      - has_checklist: true
+  - type: issue
+    labels: ["compliance-required", "checklist-required"]
+
+# 📤 Outputs This Agent Generates
+outputs:
+  - type: checklist_status
+    description: "Current status of checklist completion"
+    example:
+      checklist_id: "feature-launch-001"
+      total_items: 45
+      completed_items: 38
+      pending_items: 7
+      required_pending: 3
+      optional_pending: 4
+      completion_percentage: 84
+      blockers:
+        - item: "Legal Sign-off"
+          section: "Legal Review"
+          required: true
+          assigned_to: "@legal-team"
+
+  - type: transition_decision
+    description: "Whether a workflow transition is allowed"
+    example:
+      allowed: false
+      reason: "Required checklist items incomplete"
+      blocking_items:
+        - "Legal Sign-off"
+        - "Security Sign-off"
+        - "Privacy Impact Assessment"
+
+  - type: completion_report
+    description: "Report of checklist completion for audit"
+    example:
+      checklist_id: "feature-launch-001"
+      feature: "New Payment Feature"
+      completed_at: "2024-01-15T14:30:00Z"
+      completed_by: "@product-lead"
+      all_items_verified: true
+      archive_reference: "blackroad-os-archive/checklists/..."
+
+# ✅ What This Agent CAN Do
+capabilities:
+  allowed:
+    - Parse checklists and extract item status
+    - Count completed vs pending items
+    - Identify which items are blocking
+    - Block workflow transitions when requirements not met
+    - Send notifications about pending items
+    - Generate status reports
+    - Create audit trail entries
+    - Track completion over time
+
+  auto_actions:
+    - action: block_transition
+      when: "required_items_incomplete"
+      message: "Cannot proceed - required checklist items incomplete"
+      
+    - action: notify
+      when: "items_approaching_deadline"
+      recipients: ["item_assignees", "workflow_owner"]
+      
+    - action: add_comment
+      when: "transition_blocked"
+      content: "Transition blocked. Pending items: {blocking_items}"
+      
+    - action: update_label
+      when: "checklist_complete"
+      add: "checklist-complete"
+      remove: "checklist-required"
+
+# 🚫 What This Agent CANNOT Do
+restrictions:
+  prohibited:
+    - Mark checklist items as complete
+    - Complete items on behalf of users
+    - Skip required items
+    - Override blocking requirements
+    - Approve checklists without all required items
+    - Modify checklist templates
+    - Change item requirements (required vs optional)
+    - Auto-complete flows that require human sign-off
+
+  reason: |
+    Checklist items represent human verification of compliance requirements.
+    Only authorized humans can attest to completion of these items.
+    This agent enforces but does not complete.
+
+# 📋 Checklist Processing
+checklist_processing:
+  # Item types and their handling
+  item_types:
+    required:
+      marker: "✅"
+      blocks_transition: true
+      requires_human: true
+      
+    optional:
+      marker: "☐"
+      blocks_transition: false
+      requires_human: true
+      
+    conditional:
+      marker: "☐ (if applicable)"
+      blocks_transition: "when condition met"
+      requires_human: true
+      
+    auto_verified:
+      marker: "🤖"
+      blocks_transition: true
+      requires_human: false
+      note: "Only for automated checks, not human decisions"
+
+  # Completion detection
+  completion_patterns:
+    completed: 
+      - "- [x]"
+      - "- [X]"
+      - "☑"
+      - "✅"
+    incomplete:
+      - "- [ ]"
+      - "☐"
+      - "⬜"
+
+  # Section handling
+  sections:
+    must_complete_all:
+      - "Required Sign-offs"
+      - "Final Approval"
+    
+    partial_allowed:
+      - "Optional Items"
+      - "Nice to Have"
+
+# 🔐 Enforcement Rules
+enforcement_rules:
+  # Standard enforcement
+  standard:
+    required_items_must_be_complete: true
+    all_sign_offs_required: true
+    can_proceed_with_optional_incomplete: true
+
+  # High-risk enforcement
+  high_risk:
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    marker: "HIGH-RISK"
+    required_items_must_be_complete: true
+    all_sign_offs_required: true
+    executive_approval_required: true
+    can_proceed_with_optional_incomplete: false
+    
+  # By workflow stage
+  by_stage:
+    draft:
+      enforcement: "none"
+    review:
+      enforcement: "warn_only"
+    approval:
+      enforcement: "strict"
+    publish:
+      enforcement: "strict"
+      additional_checks:
+        - "all_approvals_verified"
+        - "no_expired_approvals"
+
+# 🔔 Notifications
+notifications:
+  pending_items:
+    frequency: "daily"
+    recipients: 
+      - item_assignees
+      - workflow_owner
+    template: |
+      Checklist Status Update
+      
+      Pending Required Items: {pending_required_count}
+      {pending_items_list}
+      
+      Please complete these items to proceed.
+
+  blocking_transition:
+    trigger: "on_transition_attempt"
+    recipients:
+      - requestor
+    template: |
+      ⛔ Transition Blocked
+      
+      The following required items must be completed:
+      {blocking_items_list}
+      
+      Please complete these items before proceeding.
+
+  completion_achieved:
+    trigger: "on_all_required_complete"
+    recipients:
+      - workflow_owner
+      - legal_team
+    template: |
+      ✅ Checklist Complete
+      
+      All required items for "{checklist_name}" are now complete.
+      Ready for final approval.
+
+# 📊 Integration Points
+integrations:
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    dashboard: "checklist-enforcement-view"
+    data:
+      - active_checklists
+      - completion_status
+      - blocked_transitions
+      - pending_by_assignee
+
+  archive:
+    repo: "blackroad-os-archive"
+    events:
+      - checklist_started
+      - item_completed
+      - transition_blocked
+      - checklist_completed
+    artifacts:
+      - completion_reports
+      - sign_off_records
+
+  operator:
+    repo: "blackroad-os-operator"
+    jobs:
+      - name: "daily_checklist_reminder"
+        schedule: "daily 9am"
+        action: send_pending_notifications
+      - name: "expiring_approvals_check"
+        schedule: "daily"
+        action: check_approval_expirations
+
+# 🧪 Testing
+testing:
+  scenarios:
+    - name: "Block transition with incomplete required items"
+      input:
+        checklist_items:
+          - { text: "Legal Sign-off", required: true, complete: false }
+          - { text: "Security Review", required: true, complete: true }
+        transition_request: "approve"
+      expected:
+        allowed: false
+        blocking_items: ["Legal Sign-off"]
+
+    - name: "Allow transition with all required complete"
+      input:
+        checklist_items:
+          - { text: "Legal Sign-off", required: true, complete: true }
+          - { text: "Optional item", required: false, complete: false }
+        transition_request: "approve"
+      expected:
+        allowed: true
+        blocking_items: []
+
+    - name: "Agent cannot mark items complete"
+      input:
+        action: "complete_item"
+        item: "Legal Sign-off"
+      expected:
+        result: "rejected"
+        reason: "Agent cannot complete checklist items"
+
+    - name: "Agent cannot skip required items"
+      input:
+        action: "skip_required"
+        item: "Legal Sign-off"
+      expected:
+        result: "rejected"
+        reason: "Cannot skip required checklist items"

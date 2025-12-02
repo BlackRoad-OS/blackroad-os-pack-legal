@@ -1,0 +1,225 @@
+# ⚖️ Legal Approval Flow State Machine
+# Defines the approval workflow for legal review requests
+
+name: legal-approval-flow
+version: "1.0.0"
+description: |
+  State machine for legal approval workflows.
+  Ensures proper review, approval, and archiving of legal-sensitive changes.
+
+# 🔁 State Machine Definition
+states:
+  # Initial state when a legal review is requested
+  - id: requested
+    name: "Review Requested"
+    emoji: "📝"
+    description: "Legal review has been requested"
+    entry_actions:
+      - create_review_ticket
+      - notify_legal_team
+      - start_sla_timer
+    allowed_transitions:
+      - to: in_review
+        requires: ["legal_team_member"]
+      - to: cancelled
+        requires: ["requester", "legal_team_member"]
+
+  # Active review in progress
+  - id: in_review
+    name: "In Review"
+    emoji: "🔍"
+    description: "Legal team is actively reviewing"
+    entry_actions:
+      - assign_reviewer
+      - pause_sla_timer
+      - add_label: "legal-review-in-progress"
+    allowed_transitions:
+      - to: needs_info
+        requires: ["legal_team_member"]
+      - to: approved
+        requires: ["legal_team_member"]
+        # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+        requires_human: true
+      - to: rejected
+        requires: ["legal_team_member"]
+        requires_human: true
+      - to: escalated
+        requires: ["legal_team_member", "legal_lead"]
+
+  # Additional information needed
+  - id: needs_info
+    name: "Needs Information"
+    emoji: "❓"
+    description: "Additional information required from requester"
+    entry_actions:
+      - notify_requester
+      - pause_sla_timer
+      - add_label: "needs-more-info"
+    allowed_transitions:
+      - to: in_review
+        requires: ["requester"]
+        trigger_on: "info_provided"
+      - to: cancelled
+        requires: ["requester"]
+        trigger_on: "request_withdrawn"
+
+  # Escalated for senior review
+  - id: escalated
+    name: "Escalated"
+    emoji: "⬆️"
+    description: "Escalated to legal leadership for decision"
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    marker: "HIGH-RISK"
+    entry_actions:
+      - notify_legal_lead
+      - notify_executive_team
+      - add_label: "high-risk-legal"
+    allowed_transitions:
+      - to: approved
+        requires: ["legal_lead"]
+        requires_human: true
+      - to: rejected
+        requires: ["legal_lead"]
+        requires_human: true
+      - to: in_review
+        requires: ["legal_lead"]
+        comment: "De-escalated back to standard review"
+
+  # Approved state
+  - id: approved
+    name: "Approved"
+    emoji: "✅"
+    description: "Legal review approved"
+    entry_actions:
+      - remove_label: "legal-review-in-progress"
+      - remove_label: "needs-legal-review"
+      - add_label: "legal-approved"
+      - record_approval
+      - notify_requester
+      - stop_sla_timer
+    allowed_transitions:
+      - to: archived
+        trigger_on: "auto"
+        delay: "24h"
+
+  # Rejected state
+  - id: rejected
+    name: "Rejected"
+    emoji: "❌"
+    description: "Legal review rejected"
+    entry_actions:
+      - remove_label: "legal-review-in-progress"
+      - add_label: "legal-rejected"
+      - record_rejection
+      - notify_requester
+      - stop_sla_timer
+      - require_rejection_reason
+    allowed_transitions:
+      - to: in_review
+        requires: ["legal_team_member"]
+        comment: "Re-opened for reconsideration"
+      - to: archived
+        trigger_on: "auto"
+        delay: "7d"
+
+  # Cancelled state
+  - id: cancelled
+    name: "Cancelled"
+    emoji: "🚫"
+    description: "Review request cancelled"
+    entry_actions:
+      - record_cancellation
+      - stop_sla_timer
+    allowed_transitions:
+      - to: archived
+        trigger_on: "auto"
+        delay: "24h"
+
+  # Final archived state
+  - id: archived
+    name: "Archived"
+    emoji: "🗄️"
+    description: "Review completed and archived"
+    final: true
+    entry_actions:
+      - archive_to_blackroad_archive
+      - generate_audit_record
+      - cleanup_working_artifacts
+
+# ⏱️ SLA Configuration
+sla:
+  default_response_time: "2 business days"
+  high_priority_response_time: "4 hours"
+  escalation_thresholds:
+    - after: "1 business day"
+      action: "notify_legal_lead"
+    - after: "2 business days"
+      action: "auto_escalate"
+
+# 🔐 Approval Requirements
+approval_requirements:
+  standard:
+    required_approvers: 1
+    approver_roles: ["legal_team_member"]
+  
+  high_risk:
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    required_approvers: 2
+    approver_roles: ["legal_lead", "legal_team_member"]
+    requires_documentation: true
+    risk_domains:
+      - finance
+      - trading
+      - custody
+      - identity
+      - kyc
+      - personal_data
+      - regulatory
+
+# 🤖 Agent Restrictions
+agent_permissions:
+  can_do:
+    - transition: "requested -> in_review"
+      comment: "Auto-assign if reviewer available"
+    - transition: "approved -> archived"
+      comment: "Auto-archive after approval"
+    - transition: "rejected -> archived"
+      comment: "Auto-archive after rejection"
+    - transition: "cancelled -> archived"
+      comment: "Auto-archive after cancellation"
+  
+  # Agents CANNOT do these transitions - human only
+  cannot_do:
+    - transition: "in_review -> approved"
+      reason: "Approval requires human judgment"
+    - transition: "in_review -> rejected"
+      reason: "Rejection requires human judgment"
+    - transition: "escalated -> approved"
+      reason: "Escalated approvals require legal lead"
+    - transition: "escalated -> rejected"
+      reason: "Escalated rejections require legal lead"
+
+# 📊 Integration Points
+integrations:
+  archive:
+    repo: "blackroad-os-archive"
+    events:
+      - state_transition
+      - approval_decision
+      - rejection_decision
+  
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    dashboard: "legal-compliance-view"
+    display:
+      - current_state
+      - sla_status
+      - approval_history
+
+  operator:
+    repo: "blackroad-os-operator"
+    jobs:
+      - name: "archive_legal_review"
+        trigger: "state == archived"
+      - name: "sla_reminder"
+        trigger: "sla_threshold_reached"

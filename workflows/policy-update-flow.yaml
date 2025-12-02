@@ -1,0 +1,283 @@
+# 📜 Policy Update Flow
+# Workflow for updating policies, terms, disclaimers, and notices
+
+name: policy-update-flow
+version: "1.0.0"
+description: |
+  Workflow for managing policy updates, terms changes, disclaimers, and notices.
+  Ensures proper review, approval, versioning, and communication of policy changes.
+
+# 🎯 When This Is Used
+trigger_events:
+  - policy_change_request
+  - terms_update
+  - disclaimer_update
+  - notice_publication
+  - privacy_policy_change
+
+# 👥 Who Must Be Involved
+required_roles:
+  - policy_owner          # Owner of the policy being changed
+  - legal_reviewer        # Legal team member for review
+  - comms_team           # Communications for customer notification
+  - executive_approver   # For high-impact changes
+
+# 📋 Policy Types
+policy_types:
+  - id: privacy_policy
+    name: "Privacy Policy"
+    emoji: "🔒"
+    notification_required: true
+    customer_notification_days: 30
+    high_risk: true
+
+  - id: terms_of_service
+    name: "Terms of Service"
+    emoji: "📜"
+    notification_required: true
+    customer_notification_days: 30
+    high_risk: true
+
+  - id: acceptable_use
+    name: "Acceptable Use Policy"
+    emoji: "✅"
+    notification_required: true
+    customer_notification_days: 14
+    high_risk: false
+
+  - id: security_overview
+    name: "Security Overview"
+    emoji: "🛡️"
+    notification_required: false
+    customer_notification_days: 0
+    high_risk: false
+
+  - id: disclaimer
+    name: "Disclaimer"
+    emoji: "⚠️"
+    notification_required: false
+    customer_notification_days: 0
+    high_risk: false
+
+  - id: notice
+    name: "Legal Notice"
+    emoji: "📢"
+    notification_required: true
+    customer_notification_days: 7
+    high_risk: false
+
+# 🔁 Workflow States
+states:
+  - id: draft
+    name: "Draft"
+    emoji: "📝"
+    description: "Policy update is being drafted"
+    entry_actions:
+      - create_draft_version
+      - notify_policy_owner
+    allowed_transitions:
+      - to: internal_review
+        requires: ["policy_owner"]
+
+  - id: internal_review
+    name: "Internal Review"
+    emoji: "👀"
+    description: "Policy under internal stakeholder review"
+    entry_actions:
+      - notify_stakeholders
+      - start_review_period
+    allowed_transitions:
+      - to: legal_review
+        requires: ["policy_owner"]
+        condition: "internal_feedback_addressed"
+      - to: draft
+        requires: ["policy_owner"]
+        comment: "Back to draft for changes"
+
+  - id: legal_review
+    name: "Legal Review"
+    emoji: "⚖️"
+    description: "Policy under legal team review"
+    entry_actions:
+      - notify_legal_team
+      - add_label: "needs-legal-review"
+    allowed_transitions:
+      - to: legal_approved
+        requires: ["legal_reviewer"]
+        requires_human: true
+      - to: draft
+        requires: ["legal_reviewer"]
+        comment: "Returned for revision"
+        requires_human: true
+
+  - id: legal_approved
+    name: "Legal Approved"
+    emoji: "✅⚖️"
+    description: "Legal team has approved the policy"
+    entry_actions:
+      - add_label: "legal-approved"
+      - notify_comms_team
+    # For high-risk policies: HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    allowed_transitions:
+      - to: exec_review
+        condition: "policy.high_risk == true"
+        requires: ["legal_reviewer"]
+      - to: comms_review
+        condition: "policy.notification_required == true"
+        requires: ["legal_reviewer"]
+      - to: ready_to_publish
+        condition: "policy.high_risk == false && policy.notification_required == false"
+        requires: ["legal_reviewer"]
+
+  - id: exec_review
+    name: "Executive Review"
+    emoji: "👔"
+    description: "High-impact policy requires executive approval"
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    marker: "HIGH-RISK"
+    entry_actions:
+      - notify_executive_team
+      - add_label: "high-risk-legal"
+    allowed_transitions:
+      - to: comms_review
+        requires: ["executive_approver"]
+        requires_human: true
+        condition: "policy.notification_required == true"
+      - to: ready_to_publish
+        requires: ["executive_approver"]
+        requires_human: true
+        condition: "policy.notification_required == false"
+      - to: legal_review
+        requires: ["executive_approver"]
+        comment: "Returned to legal for revision"
+        requires_human: true
+
+  - id: comms_review
+    name: "Communications Review"
+    emoji: "📢"
+    description: "Communications team reviewing notification strategy"
+    entry_actions:
+      - prepare_notification_draft
+      - add_label: "needs-comms-signoff"
+    allowed_transitions:
+      - to: ready_to_publish
+        requires: ["comms_team"]
+        requires_human: true
+
+  - id: ready_to_publish
+    name: "Ready to Publish"
+    emoji: "🚀"
+    description: "Policy approved and ready for publication"
+    entry_actions:
+      - schedule_publication
+      - prepare_changelog
+    allowed_transitions:
+      - to: published
+        requires: ["policy_owner"]
+        requires_human: true
+
+  - id: published
+    name: "Published"
+    emoji: "✅📜"
+    description: "Policy is live"
+    entry_actions:
+      - publish_policy
+      - update_version_history
+      - send_customer_notifications
+      - archive_previous_version
+    allowed_transitions:
+      - to: archived
+        trigger_on: "new_version_published"
+
+  - id: archived
+    name: "Archived"
+    emoji: "🗄️"
+    description: "Previous policy version archived"
+    final: true
+    entry_actions:
+      - archive_to_blackroad_archive
+      - generate_audit_record
+
+# ✅ Completion Criteria
+completion_criteria:
+  must_be_true:
+    - legal_review_completed: true
+    - all_required_approvals: true
+    - version_number_incremented: true
+    - changelog_documented: true
+    - notification_plan_approved: "if notification_required"
+    - customer_notification_sent: "if notification_required"
+    - previous_version_archived: true
+
+# 📊 Versioning
+versioning:
+  format: "MAJOR.MINOR"
+  major_change_triggers:
+    - material_rights_change
+    - new_data_collection
+    - liability_change
+    - arbitration_clause_change
+  minor_change_triggers:
+    - clarification
+    - formatting
+    - typo_fix
+    - contact_info_update
+
+# 🔐 Notification Requirements
+notifications:
+  customer_notification:
+    channels:
+      - email
+      - in_app
+      - website_banner
+    content_requirements:
+      - summary_of_changes
+      - effective_date
+      - link_to_full_policy
+      - comparison_to_previous (for major changes)
+    
+  internal_notification:
+    recipients:
+      - customer_support
+      - sales_team
+      - product_team
+    timing: "7 days before customer notification"
+
+# 🤖 Agent Permissions
+agent_permissions:
+  can_do:
+    - create_draft_version
+    - notify_stakeholders
+    - prepare_notification_draft
+    - archive_previous_version
+    - generate_audit_record
+  
+  cannot_do:
+    - approve_legal_review
+    - approve_exec_review
+    - approve_comms_review
+    - publish_policy
+
+# 📊 Integration Points
+integrations:
+  archive:
+    repo: "blackroad-os-archive"
+    artifacts:
+      - policy_versions
+      - approval_records
+      - notification_logs
+  
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    views:
+      - policy_status_dashboard
+      - version_history
+      - upcoming_publications
+
+  operator:
+    repo: "blackroad-os-operator"
+    scheduled_jobs:
+      - name: "send_policy_reminders"
+        schedule: "daily"
+      - name: "archive_old_versions"
+        schedule: "weekly"

@@ -1,0 +1,346 @@
+# 🤖 Archive Pinger Agent
+
+# Agent for ensuring legal artifacts are properly archived
+
+name: legal-archive-pinger
+version: "1.0.0"
+description: |
+  Archive pinger agent that ensures legal workflow artifacts are properly
+  collected and archived to blackroad-os-archive for audit and compliance purposes.
+  
+  🧾 NOTE: This agent handles artifact COLLECTION and ROUTING, not legal decisions.
+  It ensures auditability by maintaining complete records of legal workflows.
+
+# 🎯 Agent Purpose
+purpose:
+  primary: "Ensure legal workflow artifacts are properly archived for audit"
+  secondary:
+    - "Collect artifacts at workflow milestones"
+    - "Verify archive completeness"
+    - "Generate archive manifests"
+    - "Alert on missing required artifacts"
+
+# 📥 Inputs This Agent Processes
+inputs:
+  - type: workflow_event
+    source: "workflows/*.yaml"
+    events:
+      - state_transition
+      - approval_recorded
+      - rejection_recorded
+      - checklist_completed
+      
+  - type: legal_artifact
+    types:
+      - approval_record
+      - rejection_record
+      - signed_document
+      - policy_version
+      - checklist_completion
+      - review_summary
+      
+  - type: archive_request
+    labels: ["archive-required", "audit-trail-required"]
+
+# 📤 Outputs This Agent Generates
+outputs:
+  - type: archive_manifest
+    description: "List of artifacts archived for a workflow"
+    example:
+      workflow_id: "LR-2024-001"
+      workflow_type: "legal_approval_flow"
+      archived_at: "2024-01-15T14:30:00Z"
+      artifacts:
+        - type: "approval_record"
+          path: "approvals/LR-2024-001/approval.json"
+          hash: "sha256:abc123..."
+        - type: "review_summary"
+          path: "approvals/LR-2024-001/summary.md"
+          hash: "sha256:def456..."
+      archive_location: "blackroad-os-archive/legal-reviews/2024/01/"
+
+  - type: completeness_report
+    description: "Report on archive completeness"
+    example:
+      workflow_id: "LR-2024-001"
+      required_artifacts: 5
+      archived_artifacts: 5
+      missing_artifacts: 0
+      status: "complete"
+
+  - type: archive_alert
+    description: "Alert for missing or incomplete archives"
+    example:
+      severity: "high"
+      workflow_id: "LR-2024-001"
+      message: "Missing required artifact: approval_signature"
+      deadline: "2024-01-16T14:30:00Z"
+
+# ✅ What This Agent CAN Do
+capabilities:
+  allowed:
+    - Collect artifacts when workflow events occur
+    - Copy artifacts to archive repository
+    - Generate archive manifests with checksums
+    - Verify archive completeness
+    - Send alerts for missing artifacts
+    - Create audit log entries
+    - Generate retention reports
+    - Query archive for existing records
+
+  auto_actions:
+    - action: archive_artifact
+      trigger: "workflow_state_change"
+      destination: "blackroad-os-archive"
+      
+    - action: generate_manifest
+      trigger: "workflow_completed"
+      format: "json"
+      
+    - action: verify_completeness
+      trigger: "archive_request"
+      on_failure: "alert"
+      
+    - action: notify
+      trigger: "missing_required_artifact"
+      recipients: ["legal-team", "compliance-team"]
+
+# 🚫 What This Agent CANNOT Do
+restrictions:
+  prohibited:
+    - Delete archived artifacts
+    - Modify archived artifacts
+    - Bypass archive requirements
+    - Create false archive records
+    - Access privileged legal content (only metadata)
+    - Make legal determinations
+    - Override retention policies
+    - Skip required archiving for any workflow
+
+  reason: |
+    Archives are immutable audit records for legal and compliance purposes.
+    This agent ensures proper archiving but cannot alter archived content.
+
+# 📦 Artifact Types
+artifact_types:
+  # Approval records
+  approval_record:
+    required: true
+    retention: "permanent"
+    fields:
+      - workflow_id
+      - approver
+      - approval_date
+      - approval_type
+      - conditions (if any)
+    archive_path: "legal-reviews/{year}/{month}/{workflow_id}/approval.json"
+
+  # Rejection records
+  rejection_record:
+    required: true
+    retention: "permanent"
+    fields:
+      - workflow_id
+      - rejector
+      - rejection_date
+      - rejection_reason
+    archive_path: "legal-reviews/{year}/{month}/{workflow_id}/rejection.json"
+
+  # Review summaries
+  review_summary:
+    required: true
+    retention: "permanent"
+    fields:
+      - workflow_id
+      - summary_text
+      - risk_assessment
+      - reviewer_notes
+    archive_path: "legal-reviews/{year}/{month}/{workflow_id}/summary.md"
+
+  # Policy versions
+  policy_version:
+    required: true
+    retention: "permanent"
+    fields:
+      - policy_type
+      - version
+      - effective_date
+      - content_hash
+      - change_summary
+    archive_path: "policies/{policy_type}/{version}/"
+
+  # Checklist completions
+  checklist_completion:
+    required: true
+    retention: "permanent"
+    fields:
+      - checklist_id
+      - completion_date
+      - items_completed
+      - sign_offs
+    archive_path: "checklists/{year}/{month}/{checklist_id}/"
+
+  # Audit logs
+  audit_log:
+    required: true
+    retention: "7 years"  # Regulatory requirement
+    fields:
+      - timestamp
+      - actor
+      - action
+      - target
+      - metadata
+    archive_path: "audit-logs/{year}/{month}/"
+
+# 🗄️ Archive Configuration
+archive_config:
+  destination:
+    repo: "blackroad-os-archive"
+    base_path: "legal-pack/"
+    
+  structure:
+    legal_reviews: "legal-reviews/{year}/{month}/{workflow_id}/"
+    policies: "policies/{policy_type}/{version}/"
+    checklists: "checklists/{year}/{month}/{checklist_id}/"
+    audit_logs: "audit-logs/{year}/{month}/"
+
+  retention:
+    default: "7 years"
+    policies: "permanent"
+    approvals: "permanent"
+    audit_logs: "7 years"
+
+  integrity:
+    checksum_algorithm: "sha256"
+    verify_on_archive: true
+    verify_on_retrieval: true
+
+# 🔔 Alerting
+alerting:
+  missing_artifact:
+    severity: "high"
+    notification_channels:
+      - slack: "#legal-alerts"
+      - email: "legal-compliance@company.com"
+    escalation:
+      - after: "4 hours"
+        to: "legal-lead"
+      - after: "24 hours"
+        to: "compliance-officer"
+
+  archive_failure:
+    severity: "critical"
+    notification_channels:
+      - pagerduty: "legal-on-call"
+    retry:
+      attempts: 3
+      backoff: "exponential"
+
+  retention_approaching:
+    severity: "low"
+    trigger: "30 days before retention_end"
+    notification_channels:
+      - email: "legal-compliance@company.com"
+
+# 📊 Integration Points
+integrations:
+  archive:
+    repo: "blackroad-os-archive"
+    write_access: true
+    read_access: true
+    operations:
+      - create_artifact
+      - verify_artifact
+      - list_artifacts
+      - generate_manifest
+
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    dashboard: "legal-archive-view"
+    data:
+      - archive_status
+      - completeness_metrics
+      - retention_calendar
+      - recent_archives
+
+  operator:
+    repo: "blackroad-os-operator"
+    jobs:
+      - name: "archive_completeness_check"
+        schedule: "daily"
+        action: verify_all_workflows_archived
+        
+      - name: "retention_review"
+        schedule: "monthly"
+        action: generate_retention_report
+        
+      - name: "integrity_verification"
+        schedule: "weekly"
+        action: verify_archive_checksums
+
+# 🔐 Compliance Requirements
+compliance:
+  # All legal workflows must be archived
+  mandatory_archiving:
+    workflows:
+      - legal_approval_flow
+      - policy_update_flow
+    trigger: "on_completion"
+    
+  # High-risk flows require immediate archiving
+  high_risk:
+    # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+    marker: "HIGH-RISK"
+    archive_timing: "immediate"
+    additional_artifacts:
+      - executive_approval
+      - risk_assessment
+    notify_on_archive: true
+
+  # Audit readiness
+  audit_support:
+    searchable: true
+    exportable: true
+    tamper_evident: true
+
+# 🧪 Testing
+testing:
+  scenarios:
+    - name: "Archive approval record"
+      input:
+        event: "approval_recorded"
+        workflow_id: "LR-2024-001"
+        data:
+          approver: "@legal-reviewer"
+          approval_date: "2024-01-15"
+      expected:
+        archived: true
+        location: "legal-reviews/2024/01/LR-2024-001/approval.json"
+        manifest_created: true
+
+    - name: "Alert on missing artifact"
+      input:
+        event: "workflow_completed"
+        workflow_id: "LR-2024-002"
+        artifacts_present: ["review_summary"]
+        artifacts_required: ["review_summary", "approval_record"]
+      expected:
+        alert_sent: true
+        alert_severity: "high"
+        missing: ["approval_record"]
+
+    - name: "Agent cannot delete archives"
+      input:
+        action: "delete_artifact"
+        path: "legal-reviews/2024/01/LR-2024-001/approval.json"
+      expected:
+        result: "rejected"
+        reason: "Agent cannot delete archived artifacts"
+
+    - name: "Agent cannot modify archives"
+      input:
+        action: "modify_artifact"
+        path: "legal-reviews/2024/01/LR-2024-001/approval.json"
+      expected:
+        result: "rejected"
+        reason: "Agent cannot modify archived artifacts"

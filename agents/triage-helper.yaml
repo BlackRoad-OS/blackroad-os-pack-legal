@@ -1,0 +1,248 @@
+# 🤖 Triage Helper Agent
+
+# Agent for triaging and routing legal review requests
+
+name: legal-triage-helper
+version: "1.0.0"
+description: |
+  Legal triage helper agent that assists with initial classification,
+  routing, and assignment of legal review requests.
+  
+  🧍‍♀️ NOTE: This agent SUGGESTS - it does NOT make final decisions.
+  All substantive legal determinations require human review.
+
+# 🎯 Agent Purpose
+purpose:
+  primary: "Assist with triaging and routing incoming legal review requests"
+  secondary:
+    - "Classify request types and risk levels"
+    - "Suggest appropriate reviewers"
+    - "Generate initial summaries"
+    - "Track SLA timelines"
+
+# 📥 Inputs This Agent Processes
+inputs:
+  - type: legal_review_request
+    source: "templates/forms/legal-review-request.md"
+  - type: issue
+    labels: ["needs-legal-review", "legal-request"]
+  - type: pull_request
+    labels: ["needs-legal-review"]
+
+# 📤 Outputs This Agent Generates
+outputs:
+  - type: triage_summary
+    description: "Summary of request with classification"
+    example:
+      request_id: "LR-{YYYY}-{NNN}"
+      title: "New Feature Privacy Review"
+      risk_level: "MEDIUM"
+      request_type: "privacy_review"
+      suggested_reviewer: "@legal-team/privacy"
+      sla_due: "{calculated_sla_date}"
+      
+  - type: risk_flags
+    description: "Flags indicating potential risk areas"
+    example:
+      flags:
+        - indicator: "personal_data"
+          severity: "high"
+          reason: "Request mentions PII collection"
+        - indicator: "new_jurisdiction"
+          severity: "medium"
+          reason: "Mentions EU expansion"
+
+  - type: routing_suggestion
+    description: "Suggested routing for the request"
+    example:
+      suggested_team: "privacy"
+      suggested_reviewer: null  # Agent suggests, human assigns
+      priority: "high"
+      reason: "GDPR implications detected"
+
+# ✅ What This Agent CAN Do
+capabilities:
+  allowed:
+    - Parse and analyze legal review requests
+    - Extract key information (who, what, when, risk indicators)
+    - Calculate risk levels based on defined criteria
+    - Suggest routing based on request type
+    - Generate summary for human reviewer
+    - Track SLA deadlines and send reminders
+    - Apply appropriate labels
+    - Send status notifications
+    - Create audit log entries
+    - Link related requests
+
+  # Automated actions
+  auto_actions:
+    - action: apply_label
+      labels: 
+        - "needs-legal-review"
+        - "legal-triage-complete"
+    - action: create_summary
+      destination: issue_comment
+    - action: notify
+      recipients: ["legal-team-queue"]
+    - action: track_sla
+      start_timer: true
+
+# 🚫 What This Agent CANNOT Do
+restrictions:
+  prohibited:
+    - Approve or reject legal requests
+    - Assign final risk classifications (can only suggest)
+    - Close requests without human approval
+    - Override human decisions
+    - Access privileged legal documents
+    - Provide legal advice or interpretations
+    - Make determinations on legal matters
+    - Auto-complete any flow marked "requires_human"
+
+  reason: |
+    Legal determinations require human judgment and professional expertise.
+    This agent assists but does not replace qualified legal review.
+
+# 🧠 Classification Logic
+classification:
+  risk_level:
+    high:
+      triggers:
+        - keyword_match: ["financial", "payment", "money", "trading", "custody"]
+        - keyword_match: ["identity", "KYC", "verification", "SSN", "passport"]
+        - keyword_match: ["PII", "personal data", "GDPR", "CCPA", "privacy"]
+        - keyword_match: ["regulatory", "SEC", "FinCEN", "compliance", "license"]
+        - keyword_match: ["litigation", "lawsuit", "legal action", "dispute"]
+        - form_field: "high_risk_indicators.any == true"
+      # HIGH-RISK LEGAL FLOW – HUMAN APPROVAL REQUIRED
+      marker: "HIGH-RISK"
+      
+    medium:
+      triggers:
+        - keyword_match: ["marketing", "advertising", "claims"]
+        - keyword_match: ["vendor", "partner", "integration"]
+        - keyword_match: ["open source", "license"]
+        - keyword_match: ["contract", "agreement", "terms"]
+        - form_field: "medium_risk_indicators.any == true"
+        
+    low:
+      triggers:
+        - keyword_match: ["typo", "clarification", "minor update"]
+        - keyword_match: ["FAQ", "documentation", "internal"]
+        - form_field: "low_risk_indicators.any == true && high_risk_indicators.none && medium_risk_indicators.none"
+
+  request_type:
+    privacy_review:
+      triggers:
+        - keyword_match: ["privacy", "data", "PII", "GDPR", "CCPA"]
+        - form_field: "review_type == 'privacy_data_review'"
+      route_to: "@legal-team/privacy"
+      
+    contract_review:
+      triggers:
+        - keyword_match: ["contract", "agreement", "MSA", "NDA", "SLA"]
+        - form_field: "review_type == 'contract_agreement_review'"
+      route_to: "@legal-team/commercial"
+      
+    marketing_review:
+      triggers:
+        - keyword_match: ["marketing", "advertising", "campaign", "claims"]
+        - form_field: "review_type == 'marketing_content_review'"
+      route_to: "@legal-team/marketing"
+      
+    product_review:
+      triggers:
+        - keyword_match: ["feature", "product", "launch"]
+        - form_field: "review_type == 'new_product_feature_review'"
+      route_to: "@legal-team/product"
+      
+    ip_review:
+      triggers:
+        - keyword_match: ["trademark", "copyright", "patent", "IP", "intellectual property"]
+        - form_field: "review_type == 'intellectual_property_review'"
+      route_to: "@legal-team/ip"
+      
+    regulatory_review:
+      triggers:
+        - keyword_match: ["regulatory", "compliance", "license", "filing"]
+        - form_field: "review_type == 'regulatory_compliance_question'"
+      route_to: "@legal-team/regulatory"
+
+# ⏱️ SLA Tracking
+sla:
+  default:
+    response_time: "2 business days"
+    resolution_time: "5 business days"
+  
+  by_priority:
+    critical:
+      response_time: "4 hours"
+      resolution_time: "24 hours"
+    high:
+      response_time: "1 business day"
+      resolution_time: "3 business days"
+    normal:
+      response_time: "2 business days"
+      resolution_time: "5 business days"
+    low:
+      response_time: "3 business days"
+      resolution_time: "10 business days"
+
+  notifications:
+    - at: "50% of response_time"
+      action: notify_assignee
+    - at: "75% of response_time"
+      action: notify_assignee_and_lead
+    - at: "100% of response_time"
+      action: escalate
+
+# 📊 Integration Points
+integrations:
+  prism_console:
+    repo: "blackroad-os-prism-console"
+    dashboard: "legal-triage-view"
+    data:
+      - pending_requests
+      - sla_status
+      - classification_summary
+
+  archive:
+    repo: "blackroad-os-archive"
+    events:
+      - triage_completed
+      - classification_applied
+      - routing_suggested
+
+  operator:
+    repo: "blackroad-os-operator"
+    jobs:
+      - name: "sla_check"
+        schedule: "hourly"
+        action: check_approaching_sla
+      - name: "daily_summary"
+        schedule: "daily"
+        action: generate_queue_summary
+
+# 🧪 Testing
+testing:
+  scenarios:
+    - name: "High risk classification"
+      input:
+        request_text: "Need review of new KYC identity verification feature"
+      expected:
+        risk_level: "high"
+        request_type: "privacy_review"
+        
+    - name: "Low risk classification"
+      input:
+        request_text: "Fix typo in FAQ page"
+      expected:
+        risk_level: "low"
+        request_type: null
+        
+    - name: "Agent cannot approve"
+      input:
+        action: "approve_request"
+      expected:
+        result: "rejected"
+        reason: "Agent cannot approve legal requests"
