@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Legal Pack Manifest",
+  "type": "object",
+  "required": ["id", "name", "version", "description", "required_roles", "depends_on", "tags", "disclaimer"],
+  "properties": {
+    "id": { "type": "string", "const": "legal" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "required_roles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "disclaimer": { "type": "string" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,16 @@
+id: legal_policy_update
+description: Policy change summarization and communication planning.
+not_legal_advice: true
+steps:
+  - id: summarize_changes
+    agent: legal-policy-steward-01
+    input: { old_policy: "", new_policy: "" }
+    output: change_summary
+  - id: change_log_entry
+    agent: legal-policy-steward-01
+    input: { change_summary: "" }
+    output: change_log_entry
+  - id: communication_plan
+    agent: legal-policy-steward-01
+    input: { change_summary: "" }
+    output: communication_plan
