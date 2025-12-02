@@ -18,12 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
       - name: Render contract
         run: |
-          pnpm ts-node lib/template.ts contracts/{{ contract }}.md > rendered.md
+          pnpm ts-node lib/template.ts contracts/${{ github.event.inputs.contract }}.md > rendered.md
       - name: Request signature
         env:
           SIGNING_TOKEN: ${{ secrets.SIGNING_TOKEN }}
         run: |
-          echo "Dispatching signature for {{ contract }} to ${{ github.event.inputs.signer }}"
+          echo "Dispatching signature for ${{ github.event.inputs.contract }} to ${{ github.event.inputs.signer }}"
           # TODO(legal-pack-next): integrate e-signature webhook
