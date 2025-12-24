@@ -19,13 +19,6 @@ permissions:
   checks: write
   security-events: write
 
-env:
-  CODEX_URL: "https://codex.blackroad.io"
-  TRINITY_ENDPOINT: "https://trinity.blackroad.io"
-  KEYCLOAK_URL: "https://identity.blackroad.io"
-  MESH_URL: "https://mesh.blackroad.io"
-  CANVA_API: "https://api.canva.com"
-
 jobs:
   # ==========================================
   # STAGE 1: MEMORY CHECK (All Claudes)
