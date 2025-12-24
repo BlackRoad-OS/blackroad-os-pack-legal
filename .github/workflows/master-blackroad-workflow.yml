@@ -409,7 +409,7 @@ ${insights.length > 0 ? insights.join('\n') : '✅ No issues detected!'}
   summary:
     name: "📊 Workflow Summary"
     runs-on: ubuntu-latest
-    needs: [check-memory, check-codex, trinity-validation, authenticate, security-scan, notify, log-to-memory]
+    needs: [check-memory, check-codex, trinity-validation, authenticate, security-scan, issue-triage, pr-review, generate-docs, notify, log-to-memory]
     if: always()
     steps:
       - name: Generate Summary
