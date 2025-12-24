@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - {{company_name}}</title>
+    <meta name="description" content="Privacy Policy for {{company_name}}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --legal-primary: #0066FF;
+            --legal-secondary: #7700FF;
+            --legal-accent: #FF006B;
+            --legal-text: #1a1a1a;
+            --legal-text-light: #666;
+            --legal-bg: #ffffff;
+            --legal-border: #e0e0e0;
+        }
+        
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.8;
+            color: var(--legal-text);
+            background: var(--legal-bg);
+            padding: 2rem 1rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(90deg, #FF9D00, #FF006B, #0066FF) 1;
+        }
+        
+        .header h1 {
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #FF9D00, #FF006B, #0066FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .meta {
+            color: var(--legal-text-light);
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+        
+        .meta strong {
+            color: var(--legal-text);
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 3rem;
+            border-left: 4px solid var(--legal-primary);
+        }
+        
+        .toc h2 {
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--legal-primary);
+        }
+        
+        .toc ul {
+            list-style: none;
+        }
+        
+        .toc li {
+            margin: 0.5rem 0;
+        }
+        
+        .toc a {
+            color: var(--legal-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .toc a:hover {
+            color: var(--legal-accent);
+            text-decoration: underline;
+        }
+        
+        .section {
+            margin: 3rem 0;
+        }
+        
+        .section h2 {
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--legal-primary);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--legal-border);
+        }
+        
+        .section h3 {
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            font-size: 1.35rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--legal-secondary);
+        }
+        
+        .section p {
+            margin: 1rem 0;
+            text-align: justify;
+        }
+        
+        .section ul, .section ol {
+            margin: 1rem 0 1rem 2rem;
+        }
+        
+        .section li {
+            margin: 0.5rem 0;
+        }
+        
+        .important {
+            background: #fff3cd;
+            border-left: 4px solid var(--legal-accent);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .important strong {
+            color: var(--legal-accent);
+        }
+        
+        .contact-box {
+            background: linear-gradient(135deg, rgba(255,157,0,0.1), rgba(0,102,255,0.1));
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            border: 2px solid var(--legal-border);
+        }
+        
+        .contact-box h3 {
+            color: var(--legal-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--legal-border);
+            text-align: center;
+            color: var(--legal-text-light);
+            font-size: 0.9rem;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .header {
+                border-image: none;
+                border-bottom: 2px solid black;
+            }
+            .header h1 {
+                -webkit-text-fill-color: black;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Privacy Policy</h1>
+            <div class="meta">
+                <p><strong>Company:</strong> {{company_name}}</p>
+                <p><strong>Effective Date:</strong> {{effective_date}}</p>
+                <p><strong>Last Updated:</strong> {{effective_date}}</p>
+                <p><strong>Version:</strong> {{version}}</p>
+            </div>
+        </div>
+        
+        <div class="toc">
+            <h2>📋 Table of Contents</h2>
+            <ul>
+                <li><a href="#introduction">1. Introduction</a></li>
+                <li><a href="#information-collection">2. Information We Collect</a></li>
+                <li><a href="#information-use">3. How We Use Your Information</a></li>
+                <li><a href="#information-sharing">4. Information Sharing and Disclosure</a></li>
+                <li><a href="#data-retention">5. Data Retention</a></li>
+                <li><a href="#your-rights">6. Your Rights and Choices</a></li>
+                <li><a href="#security">7. Data Security</a></li>
+                <li><a href="#international">8. International Data Transfers</a></li>
+                <li><a href="#children">9. Children's Privacy</a></li>
+                <li><a href="#changes">10. Changes to This Policy</a></li>
+                <li><a href="#contact">11. Contact Us</a></li>
+            </ul>
+        </div>
+        
+        <div class="section" id="introduction">
+            <h2>1. Introduction</h2>
+            <p>
+                Welcome to {{company_name}} ("we," "us," or "our"). We are committed to protecting your personal information 
+                and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your 
+                information when you use our services.
+            </p>
+            <p>
+                Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, 
+                please do not access or use our services.
+            </p>
+        </div>
+        
+        <div class="section" id="information-collection">
+            <h2>2. Information We Collect</h2>
+            
+            <h3>2.1 Information You Provide to Us</h3>
+            <p>We collect information that you voluntarily provide to us when you:</p>
+            <ul>
+                <li>Register for an account</li>
+                <li>Use our services</li>
+                <li>Contact our support team</li>
+                <li>Participate in surveys or promotions</li>
+                <li>Subscribe to our communications</li>
+            </ul>
+            <p>This information may include:</p>
+            <ul>
+                <li>Name and contact information (email address, phone number)</li>
+                <li>Account credentials (username, password)</li>
+                <li>Profile information</li>
+                <li>Payment information (processed by third-party payment processors)</li>
+                <li>Communications with us</li>
+            </ul>
+            
+            <h3>2.2 Information Automatically Collected</h3>
+            <p>When you access our services, we automatically collect certain information, including:</p>
+            <ul>
+                <li>Device information (device type, operating system, browser type)</li>
+                <li>Usage information (pages viewed, features used, time spent)</li>
+                <li>IP address and general location information</li>
+                <li>Cookies and similar tracking technologies</li>
+            </ul>
+        </div>
+        
+        <div class="section" id="information-use">
+            <h2>3. How We Use Your Information</h2>
+            <p>We use the information we collect for the following purposes:</p>
+            <ul>
+                <li><strong>Provide and maintain our services:</strong> To operate, maintain, and improve our services</li>
+                <li><strong>Process transactions:</strong> To process payments and fulfill orders</li>
+                <li><strong>Communicate with you:</strong> To send service updates, security alerts, and support messages</li>
+                <li><strong>Personalize your experience:</strong> To tailor content and features to your preferences</li>
+                <li><strong>Analytics and improvements:</strong> To understand how users interact with our services</li>
+                <li><strong>Security and fraud prevention:</strong> To detect and prevent unauthorized access</li>
+                <li><strong>Legal compliance:</strong> To comply with applicable laws and regulations</li>
+            </ul>
+            
+            <div class="important">
+                <p><strong>Legal Basis for Processing (GDPR):</strong> We process your personal data based on:</p>
+                <ul>
+                    <li>Your consent</li>
+                    <li>Performance of a contract with you</li>
+                    <li>Our legitimate interests</li>
+                    <li>Compliance with legal obligations</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section" id="information-sharing">
+            <h2>4. Information Sharing and Disclosure</h2>
+            <p>We do not sell your personal information. We may share your information in the following circumstances:</p>
+            
+            <h3>4.1 Service Providers</h3>
+            <p>
+                We may share your information with third-party service providers who perform services on our behalf, 
+                such as payment processing, data analysis, email delivery, and customer service. These providers 
+                are contractually obligated to protect your information and use it only for the purposes we specify.
+            </p>
+            
+            <h3>4.2 Legal Requirements</h3>
+            <p>We may disclose your information if required to do so by law or in response to valid requests by public authorities.</p>
+            
+            <h3>4.3 Business Transfers</h3>
+            <p>
+                If we are involved in a merger, acquisition, or sale of assets, your information may be transferred 
+                as part of that transaction.
+            </p>
+        </div>
+        
+        <div class="section" id="data-retention">
+            <h2>5. Data Retention</h2>
+            <p>
+                We retain your personal information only for as long as necessary to fulfill the purposes outlined in 
+                this Privacy Policy, unless a longer retention period is required or permitted by law.
+            </p>
+            <p>
+                When we no longer need your information, we will securely delete or anonymize it in accordance with 
+                our data retention policies.
+            </p>
+        </div>
+        
+        <div class="section" id="your-rights">
+            <h2>6. Your Rights and Choices</h2>
+            <p>Depending on your location, you may have the following rights regarding your personal information:</p>
+            
+            <h3>6.1 GDPR Rights (EU/EEA Users)</h3>
+            <ul>
+                <li><strong>Right to access:</strong> Request a copy of your personal data</li>
+                <li><strong>Right to rectification:</strong> Correct inaccurate or incomplete data</li>
+                <li><strong>Right to erasure:</strong> Request deletion of your personal data</li>
+                <li><strong>Right to restrict processing:</strong> Limit how we use your data</li>
+                <li><strong>Right to data portability:</strong> Receive your data in a portable format</li>
+                <li><strong>Right to object:</strong> Object to processing based on legitimate interests</li>
+                <li><strong>Right to withdraw consent:</strong> Withdraw consent at any time</li>
+            </ul>
+            
+            <h3>6.2 CCPA Rights (California Users)</h3>
+            <ul>
+                <li>Right to know what personal information is collected</li>
+                <li>Right to know if personal information is sold or disclosed</li>
+                <li>Right to opt-out of the sale of personal information</li>
+                <li>Right to delete personal information</li>
+                <li>Right to non-discrimination for exercising your rights</li>
+            </ul>
+            
+            <p>To exercise any of these rights, please contact us at {{contact_email}}.</p>
+        </div>
+        
+        <div class="section" id="security">
+            <h2>7. Data Security</h2>
+            <p>
+                We implement appropriate technical and organizational measures to protect your personal information 
+                against unauthorized access, alteration, disclosure, or destruction. These measures include:
+            </p>
+            <ul>
+                <li>Encryption of data in transit and at rest</li>
+                <li>Regular security assessments and audits</li>
+                <li>Access controls and authentication</li>
+                <li>Employee training on data protection</li>
+                <li>Incident response procedures</li>
+            </ul>
+            <p>
+                However, no method of transmission over the Internet or electronic storage is 100% secure. 
+                We cannot guarantee absolute security.
+            </p>
+        </div>
+        
+        <div class="section" id="international">
+            <h2>8. International Data Transfers</h2>
+            <p>
+                Your information may be transferred to and processed in countries other than your country of residence. 
+                These countries may have data protection laws that are different from the laws of your country.
+            </p>
+            <p>
+                When we transfer personal data outside the EEA, we ensure appropriate safeguards are in place, 
+                such as Standard Contractual Clauses approved by the European Commission.
+            </p>
+        </div>
+        
+        <div class="section" id="children">
+            <h2>9. Children's Privacy</h2>
+            <p>
+                Our services are not intended for individuals under the age of 18. We do not knowingly collect 
+                personal information from children. If you are a parent or guardian and believe your child has 
+                provided us with personal information, please contact us immediately.
+            </p>
+        </div>
+        
+        <div class="section" id="changes">
+            <h2>10. Changes to This Policy</h2>
+            <p>
+                We may update this Privacy Policy from time to time. We will notify you of any material changes 
+                by posting the new Privacy Policy on this page and updating the "Last Updated" date.
+            </p>
+            <p>
+                We encourage you to review this Privacy Policy periodically for any changes. Your continued use 
+                of our services after any modifications indicates your acceptance of the updated Privacy Policy.
+            </p>
+        </div>
+        
+        <div class="section" id="contact">
+            <h2>11. Contact Us</h2>
+            <div class="contact-box">
+                <h3>Questions or Concerns?</h3>
+                <p>If you have any questions about this Privacy Policy or our data practices, please contact us:</p>
+                <p><strong>Email:</strong> {{contact_email}}</p>
+                <p><strong>Data Protection Officer:</strong> {{dpo_name}}</p>
+                <p><strong>Address:</strong> {{company_address}}</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{current_year}} {{company_name}}. All rights reserved.</p>
+            <p>This Privacy Policy is governed by the laws of {{jurisdiction}}.</p>
+        </div>
+    </div>
+</body>
+</html>
