@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Portal - {{company_name}}</title>
+    <meta name="description" content="Legal documents and policies for {{company_name}}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --gradient-start: #FF9D00;
+            --gradient-mid: #FF006B;
+            --gradient-end: #0066FF;
+            --legal-primary: #0066FF;
+            --legal-secondary: #7700FF;
+            --legal-accent: #FF006B;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --bg-light: #f8f9fa;
+            --border: #e0e0e0;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, 
+                rgba(255,157,0,0.05) 0%, 
+                rgba(255,0,107,0.05) 50%, 
+                rgba(0,102,255,0.05) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+        
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav a:hover {
+            color: var(--legal-primary);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-box {
+            max-width: 600px;
+            margin: 2rem auto;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .search-box input:focus {
+            border-color: var(--legal-primary);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(90deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end)) 1;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            color: var(--legal-primary);
+        }
+        
+        .section-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--legal-primary);
+        }
+        
+        .card-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--legal-primary);
+            border: 2px solid var(--legal-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--legal-primary);
+            color: white;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .status-current {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-archived {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, rgba(255,157,0,0.1), rgba(0,102,255,0.1));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            border-left: 4px solid var(--legal-accent);
+        }
+        
+        .info-box h3 {
+            color: var(--legal-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .footer {
+            background: white;
+            padding: 2rem 0;
+            margin-top: 4rem;
+            border-top: 2px solid var(--border);
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer h4 {
+            color: var(--legal-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .footer ul {
+            list-style: none;
+        }
+        
+        .footer li {
+            margin: 0.5rem 0;
+        }
+        
+        .footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer a:hover {
+            color: var(--legal-primary);
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">⚖️ {{company_name}} Legal</div>
+            <nav class="nav">
+                <a href="#policies">Policies</a>
+                <a href="#contracts">Contracts</a>
+                <a href="#compliance">Compliance</a>
+                <a href="#contact">Contact</a>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="hero">
+            <h1>Legal Center</h1>
+            <p>Access our legal documents, policies, and compliance information all in one place.</p>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Search policies and documents..." id="searchInput">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+        
+        <div class="section" id="policies">
+            <div class="section-header">
+                <span class="section-icon">📜</span>
+                <h2>Current Policies</h2>
+            </div>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">🔒</div>
+                    <h3>Privacy Policy</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-current">Current</span>
+                        <span>v2.1 • Effective: {{privacy_date}}</span>
+                    </div>
+                    <p>Learn how we collect, use, and protect your personal information.</p>
+                    <div class="card-actions">
+                        <a href="/privacy" class="btn btn-primary">View Policy</a>
+                        <a href="/privacy.pdf" class="btn btn-secondary">Download PDF</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">📋</div>
+                    <h3>Terms of Service</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-current">Current</span>
+                        <span>v3.0 • Effective: {{terms_date}}</span>
+                    </div>
+                    <p>The terms and conditions governing your use of our services.</p>
+                    <div class="card-actions">
+                        <a href="/terms" class="btn btn-primary">View Terms</a>
+                        <a href="/terms.pdf" class="btn btn-secondary">Download PDF</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🍪</div>
+                    <h3>Cookie Policy</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-current">Current</span>
+                        <span>v1.5 • Effective: {{cookie_date}}</span>
+                    </div>
+                    <p>Information about our use of cookies and tracking technologies.</p>
+                    <div class="card-actions">
+                        <a href="/cookies" class="btn btn-primary">View Policy</a>
+                        <a href="/cookies.pdf" class="btn btn-secondary">Download PDF</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">✅</div>
+                    <h3>Acceptable Use Policy</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-current">Current</span>
+                        <span>v1.2 • Effective: {{aup_date}}</span>
+                    </div>
+                    <p>Guidelines for acceptable use of our platform and services.</p>
+                    <div class="card-actions">
+                        <a href="/acceptable-use" class="btn btn-primary">View Policy</a>
+                        <a href="/acceptable-use.pdf" class="btn btn-secondary">Download PDF</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>📅 Policy Updates</h3>
+            <p>We regularly review and update our policies to ensure they remain current and compliant with applicable laws. 
+            You will be notified of material changes via email and through prominent notices on our platform. 
+            Previous versions are available in our <a href="#archive" style="color: var(--legal-primary); font-weight: 600;">archive</a>.</p>
+        </div>
+        
+        <div class="section" id="compliance">
+            <div class="section-header">
+                <span class="section-icon">🛡️</span>
+                <h2>Compliance & Security</h2>
+            </div>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">🇪🇺</div>
+                    <h3>GDPR Compliance</h3>
+                    <div class="card-meta">Last Audit: {{gdpr_audit_date}}</div>
+                    <p>We are fully compliant with the EU General Data Protection Regulation.</p>
+                    <div class="card-actions">
+                        <a href="/gdpr" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🇺🇸</div>
+                    <h3>CCPA Compliance</h3>
+                    <div class="card-meta">Last Review: {{ccpa_review_date}}</div>
+                    <p>California Consumer Privacy Act compliance and your rights.</p>
+                    <div class="card-actions">
+                        <a href="/ccpa" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🔐</div>
+                    <h3>Security Practices</h3>
+                    <div class="card-meta">Updated: {{security_date}}</div>
+                    <p>Our approach to protecting your data and ensuring service security.</p>
+                    <div class="card-actions">
+                        <a href="/security" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="archive">
+            <div class="section-header">
+                <span class="section-icon">🗄️</span>
+                <h2>Policy Archive</h2>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Access previous versions of our policies for reference and historical purposes.
+            </p>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon">📜</div>
+                    <h3>Privacy Policy Archive</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-archived">Archived</span>
+                        <span>5 previous versions</span>
+                    </div>
+                    <p>Historical versions: v2.0, v1.5, v1.0, and earlier.</p>
+                    <div class="card-actions">
+                        <a href="/archive/privacy" class="btn btn-secondary">View Archive</a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">📋</div>
+                    <h3>Terms Archive</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-archived">Archived</span>
+                        <span>8 previous versions</span>
+                    </div>
+                    <p>Historical versions: v2.5, v2.0, v1.8, and earlier.</p>
+                    <div class="card-actions">
+                        <a href="/archive/terms" class="btn btn-secondary">View Archive</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="contact">
+            <div class="section-header">
+                <span class="section-icon">📧</span>
+                <h2>Contact Legal Team</h2>
+            </div>
+            <div class="info-box">
+                <h3>Get in Touch</h3>
+                <p><strong>General Legal Inquiries:</strong> {{legal_email}}</p>
+                <p><strong>Privacy Questions:</strong> {{privacy_email}}</p>
+                <p><strong>Data Protection Officer:</strong> {{dpo_email}}</p>
+                <p><strong>Report Abuse:</strong> {{abuse_email}}</p>
+                <p><strong>Security Issues:</strong> {{security_email}}</p>
+                <p style="margin-top: 1rem;">
+                    <strong>Mailing Address:</strong><br>
+                    {{company_address}}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <h4>Legal Documents</h4>
+                <ul>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
+                    <li><a href="/cookies">Cookie Policy</a></li>
+                    <li><a href="/acceptable-use">Acceptable Use</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Compliance</h4>
+                <ul>
+                    <li><a href="/gdpr">GDPR</a></li>
+                    <li><a href="/ccpa">CCPA</a></li>
+                    <li><a href="/security">Security</a></li>
+                    <li><a href="/certifications">Certifications</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="/archive">Policy Archive</a></li>
+                    <li><a href="/faq">Legal FAQ</a></li>
+                    <li><a href="/contact">Contact Us</a></li>
+                    <li><a href="/report">Report Issue</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/careers">Careers</a></li>
+                    <li><a href="/press">Press</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Simple search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = searchTerm ? 'none' : 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
