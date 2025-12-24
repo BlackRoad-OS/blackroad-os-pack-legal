@@ -183,16 +183,15 @@ jobs:
               issue_number: issue.number,
               body: `👋 Thanks for opening this issue!
 
-🤖 **Master BlackRoad Workflow Activated:**
-- ✅ Checked [MEMORY] for coordination
-- ✅ Searched [CODEX] for existing solutions
-- ✅ Trinity validation complete
-- ✅ Authenticated via Keycloak
+🤖 **Master BlackRoad Workflow Activated (simulation only):**
+- ℹ️ Checklist simulated within this GitHub Action
+- ℹ️ No external MEMORY/CODEX/Trinity/Keycloak systems were contacted
 - ✅ Auto-labeled as: ${labels.join(', ')}
 
 A team member will review soon!
 
-🌌 *Powered by 5+ Claude agents working together*`
+🌌 *Prototype workflow – heuristic triage assistance only*`
+            
             });
 
   # ==========================================
